@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from '../../src/initialData.js';
-import { AppState } from '../../src/types.js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
@@ -9,7 +7,22 @@ const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
 
-const fetchStateFromSupabase = async (): Promise<AppState> => {
+const initialMenuItems = []; // Se cargarán desde Supabase
+const initialGalleryItems = [];
+const initialGeneralInfo = {
+  phone: '+53 7 830 0793',
+  email: 'catedralrestaurantecuba@gmail.com',
+  address: 'Calle 8 entre Calzada y 5ta, Vedado, La Habana, Cuba',
+  mapUrl: 'https://www.google.com/maps?q=23.1302190,-82.4032210',
+  scheduleEs: 'Desayuno: 8:30 – 11:00 am  ·  Almuerzo & Cena: 12:00 m – 10:00 pm',
+  scheduleEn: 'Breakfast: 8:30 – 11:00 am  ·  Lunch & Dinner: 12:00 pm – 10:00 pm',
+  whatsapp: '5378300793',
+  instagram: 'lacatedralcuba',
+  facebook: 'mirestaurantencuba',
+  whatsappGroup: 'https://chat.whatsapp.com/BoaqXwjmrjsEPLkzYY3bLI?mode=gi_t'
+};
+
+const fetchStateFromSupabase = async () => {
   if (!supabase) {
     return {
       menuItems: initialMenuItems,
@@ -141,3 +154,4 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Error processing request', details: String(err) });
   }
 }
+

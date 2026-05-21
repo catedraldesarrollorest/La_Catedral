@@ -12,6 +12,7 @@ import {
   ChevronDown, Settings, FileText, Printer, ArrowUp, ArrowDown, Layers
 } from 'lucide-react';
 import { MenuItem, GalleryItem, GeneralInfo, AppState } from './types.js';
+import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './initialData.js';
 
 export interface MenuPageConfig {
   id: string;
@@ -32,6 +33,7 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<'es' | 'en'>('es');
+  const [isLocalMode, setIsLocalMode] = useState<boolean>(false);
   
   // Client Tabs
   const [activeGalleryTab, setActiveGalleryTab] = useState<'local' | 'bebidas' | 'platos' | 'postres'>('local');
@@ -188,14 +190,40 @@ export default function App() {
     try {
       const response = await fetch('/api/state');
       if (!response.ok) {
-        throw new Error('No se pudo establecer conexión con la base de datos del restaurante.');
+        throw new Error('API returned non-ok response.');
       }
       const data: AppState = await response.json();
       setState(data);
       setEditedInfo(data.generalInfo);
       setError(null);
+      setIsLocalMode(false);
     } catch (err: any) {
-      setError(err?.message || 'Error al conectar con el servidor.');
+      console.warn('Backend API not available, falling back to LocalStorage Mode.', err);
+      setIsLocalMode(true);
+      
+      // Attempt to load from local storage
+      const localDataStr = localStorage.getItem('catedral_rest_state');
+      if (localDataStr) {
+        try {
+          const localData: AppState = JSON.parse(localDataStr);
+          setState(localData);
+          setEditedInfo(localData.generalInfo);
+          setError(null);
+          return;
+        } catch (parseErr) {
+          console.error('Error parsing localStorage state', parseErr);
+        }
+      }
+      
+      // Fallback to initial default data
+      const defaultState: AppState = {
+        menuItems: initialMenuItems,
+        galleryItems: initialGalleryItems,
+        generalInfo: initialGeneralInfo
+      };
+      setState(defaultState);
+      setEditedInfo(initialGeneralInfo);
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -203,6 +231,19 @@ export default function App() {
 
   const saveStateToServer = async (updatedState: AppState, message: string = 'Cambios guardados con éxito') => {
     setSaveStatus('saving');
+    
+    // Always persist to localStorage for local/hybrid support
+    localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
+
+    if (isLocalMode) {
+      setTimeout(() => {
+        setState(updatedState);
+        setSaveStatus('success');
+        showToast(message + ' (Guardado en este navegador)');
+      }, 300);
+      return;
+    }
+
     try {
       const response = await fetch('/api/state', {
         method: 'POST',
@@ -217,8 +258,10 @@ export default function App() {
       setSaveStatus('success');
       showToast(message);
     } catch (err) {
-      setSaveStatus('error');
-      showToast('Error al conectar con la base de datos para guardar.');
+      console.error('Failed to save to server, falling back to local state save', err);
+      setState(updatedState);
+      setSaveStatus('success');
+      showToast(message + ' (Guardado localmente)');
     }
   };
 
@@ -227,6 +270,27 @@ export default function App() {
       return;
     }
     setSaveStatus('saving');
+    
+    const defaultState: AppState = {
+      menuItems: initialMenuItems,
+      galleryItems: initialGalleryItems,
+      generalInfo: initialGeneralInfo
+    };
+
+    localStorage.setItem('catedral_rest_state', JSON.stringify(defaultState));
+
+    if (isLocalMode) {
+      setTimeout(() => {
+        setState(defaultState);
+        setEditedInfo(initialGeneralInfo);
+        setSaveStatus('success');
+        showToast('Se han reestablecido los datos originales del restaurante (local).');
+        setIsAuthenticated(false);
+        setAdminOpen(false);
+      }, 300);
+      return;
+    }
+
     try {
       const response = await fetch('/api/state/reset', { method: 'POST' });
       const resData = await response.json();
@@ -237,8 +301,12 @@ export default function App() {
       setIsAuthenticated(false);
       setAdminOpen(false);
     } catch (err) {
-      setSaveStatus('error');
-      showToast('Error al restablecer valores por defecto.');
+      setState(defaultState);
+      setEditedInfo(initialGeneralInfo);
+      setSaveStatus('success');
+      showToast('Se han reestablecido los datos del restaurante (local).');
+      setIsAuthenticated(false);
+      setAdminOpen(false);
     }
   };
 
@@ -1018,8 +1086,17 @@ export default function App() {
             <header className="bg-editorial-dark text-white px-6 py-4 flex justify-between items-center shrink-0 border-b border-stone-800">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-editorial-red" />
-                <h2 className="font-cinzel text-xs sm:text-sm tracking-widest font-semibold uppercase">
-                  Backoffice Catedral · {lang === 'es' ? 'Gestor del Menú' : 'Backoffice Portal'}
+                <h2 className="font-cinzel text-xs sm:text-sm tracking-widest font-semibold uppercase flex items-center gap-2 flex-wrap">
+                  <span>Backoffice Catedral</span>
+                  {isLocalMode ? (
+                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[8px] font-sans font-medium uppercase tracking-wider px-2 py-0.5 rounded ml-2">
+                      Modo local (Vercel)
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[8px] font-sans font-medium uppercase tracking-wider px-2 py-0.5 rounded ml-2">
+                      Servidor Activo
+                    </span>
+                  )}
                 </h2>
               </div>
               <button 

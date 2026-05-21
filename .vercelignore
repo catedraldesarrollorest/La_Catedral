@@ -1,0 +1,8 @@
+server.ts
+.env.local
+.env.example
+node_modules
+.git
+supabase
+BACKEND_MIGRATION_CHECKLIST.md
+SUPABASE_SETUP.md

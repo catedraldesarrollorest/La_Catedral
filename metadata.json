@@ -1,0 +1,6 @@
+{
+  "name": "La Catedral",
+  "description": "Sitio web y panel de administración autoadministrable para editar comida, bebidas, fotos y precios de La Catedral Bar-Restaurante",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

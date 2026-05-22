@@ -11,9 +11,9 @@ module.exports = async function handler(req, res) {
 
   try {
     // Test basic Supabase connectivity
-    const { data: menuData, error: menuError } = await supabase
+    const { data: menuData, error: menuError, count: menuCount } = await supabase
       .from('menu_items')
-      .select('count', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
 
     if (menuError) {
       return res.status(500).json({
@@ -24,9 +24,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const { data: galleryData, error: galleryError } = await supabase
+    const { data: galleryData, error: galleryError, count: galleryCount } = await supabase
       .from('gallery_items')
-      .select('count', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
 
     if (galleryError) {
       return res.status(500).json({
@@ -37,9 +37,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const { data: infoData, error: infoError } = await supabase
+    const { data: infoData, error: infoError, count: infoCount } = await supabase
       .from('general_info')
-      .select('count', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
 
     if (infoError) {
       return res.status(500).json({
@@ -54,9 +54,9 @@ module.exports = async function handler(req, res) {
       status: 'success',
       message: 'Supabase connection OK',
       tables: {
-        menu_items: menuData,
-        gallery_items: galleryData,
-        general_info: infoData
+        menu_items: menuCount,
+        gallery_items: galleryCount,
+        general_info: infoCount
       }
     });
   } catch (error) {

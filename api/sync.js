@@ -71,17 +71,23 @@ export default async function handler(req, res) {
         }
       }
 
-      if (galleryItems && galleryItems.length > 0) {
-        const { error: galleryError } = await supabase.from('gallery_items').upsert(
-          galleryItems.map((item) => ({
-            id: item.id,
-            category: item.category,
-            image_url: item.imageSrc
-          }))
-        );
-        if (galleryError) {
-          console.error('Gallery items upsert error:', galleryError);
-          return res.status(500).json({ error: `Gallery items error: ${galleryError.message}` });
+      if (galleryItems && galleryItems.length >= 0) {
+        // Delete all existing gallery items first
+        await supabase.from('gallery_items').delete().neq('id', '');
+
+        // Then insert the new ones
+        if (galleryItems.length > 0) {
+          const { error: galleryError } = await supabase.from('gallery_items').upsert(
+            galleryItems.map((item) => ({
+              id: item.id,
+              category: item.category,
+              image_url: item.imageSrc
+            }))
+          );
+          if (galleryError) {
+            console.error('Gallery items upsert error:', galleryError);
+            return res.status(500).json({ error: `Gallery items error: ${galleryError.message}` });
+          }
         }
       }
 

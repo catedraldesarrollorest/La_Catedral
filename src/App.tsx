@@ -581,9 +581,9 @@ export default function App() {
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <div className="font-cinzel text-sm sm:text-lg font-bold tracking-[0.25em] flex items-center gap-2">
             {/* The templar cross symbol opens the administration portal when clicked */}
-            <button 
+            <button
               onClick={() => setAdminOpen(true)}
-              className="text-editorial-red text-md sm:text-l leading-none hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-1"
+              className="text-editorial-red text-md sm:text-l leading-none opacity-50 hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-1"
               title="Portal"
             >
               ✛

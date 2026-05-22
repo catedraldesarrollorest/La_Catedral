@@ -585,7 +585,7 @@ export default function App() {
             title="Portal"
           >
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="La Catedral Logo"
               className="h-8 sm:h-10 w-auto object-contain"
             />

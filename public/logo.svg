@@ -1,0 +1,12 @@
+<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Red Templar Cross -->
+  <g id="cross">
+    <path d="M 200 40 L 240 80 L 280 80 L 280 140 L 340 140 L 340 180 L 280 180 L 280 240 L 340 240 L 340 280 L 280 280 L 280 340 L 240 340 L 240 280 L 120 280 L 120 340 L 80 340 L 80 280 L 20 280 L 20 240 L 80 240 L 80 180 L 20 180 L 20 140 L 80 140 L 80 80 L 120 80 Z" fill="#C1272D"/>
+  </g>
+
+  <!-- Text: LA CATEDRAL -->
+  <text x="200" y="380" font-family="Cinzel, serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#000000">LA CATEDRAL</text>
+
+  <!-- Text: BAR·RESTAURANTE -->
+  <text x="200" y="420" font-family="serif" font-size="20" text-anchor="middle" fill="#000000" letter-spacing="3">BAR · RESTAURANTE</text>
+</svg>

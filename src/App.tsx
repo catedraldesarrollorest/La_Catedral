@@ -581,7 +581,7 @@ export default function App() {
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
           <button
             onClick={() => setAdminOpen(true)}
-            className="opacity-50 hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-0"
+            className="cursor-pointer bg-transparent border-none outline-none transition-all p-0 hover:scale-110"
             title="Portal"
           >
             <img
@@ -641,7 +641,7 @@ export default function App() {
                     <img
                       src="/logo.png"
                       alt="La Catedral Logo"
-                      className="h-20 sm:h-32 w-auto object-contain opacity-75"
+                      className="h-20 sm:h-32 w-auto object-contain"
                     />
                   </div>
 

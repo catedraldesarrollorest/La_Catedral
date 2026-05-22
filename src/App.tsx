@@ -593,7 +593,7 @@ export default function App() {
           <img
             src="/nombre.svg"
             alt="La Catedral"
-            className="h-6 sm:h-8 w-auto object-contain"
+            className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>
 

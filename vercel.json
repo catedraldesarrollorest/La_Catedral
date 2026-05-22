@@ -1,6 +1,5 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "publicPath": "public"
+  "outputDirectory": "dist"
 }
 

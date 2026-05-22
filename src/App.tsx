@@ -973,7 +973,7 @@ export default function App() {
                 
                 {/* Left side general branding */}
                 <div className="lg:col-span-5 space-y-6">
-                  <div className="font-cinzel font-bold text-xl tracking-[0.25em] flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <img
                       src="/logo.png"
                       alt="La Catedral Logo"
@@ -982,7 +982,8 @@ export default function App() {
                     <img
                       src="/nombre.svg"
                       alt="La Catedral"
-                      className="h-8 w-auto object-contain brightness-200"
+                      className="h-10 w-auto object-contain"
+                      style={{filter: 'invert(1) brightness(1.1)'}}
                     />
                   </div>
                   <p className="text-xs text-stone-400 font-light leading-relaxed max-w-md">

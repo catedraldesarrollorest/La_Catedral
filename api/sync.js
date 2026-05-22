@@ -39,7 +39,18 @@ export default async function handler(req, res) {
           category: item.category,
           imageSrc: item.image_url
         })),
-        generalInfo: infoRes.data?.[0] || {}
+        generalInfo: infoRes.data?.[0] ? {
+          phone: infoRes.data[0].phone,
+          email: infoRes.data[0].email,
+          address: infoRes.data[0].address,
+          mapUrl: infoRes.data[0].map_url,
+          scheduleEs: infoRes.data[0].schedule_es,
+          scheduleEn: infoRes.data[0].schedule_en,
+          whatsapp: infoRes.data[0].whatsapp,
+          instagram: infoRes.data[0].instagram,
+          facebook: infoRes.data[0].facebook,
+          whatsappGroup: infoRes.data[0].whatsapp_group
+        } : {}
       });
     } catch (error) {
       console.error('Error:', error);

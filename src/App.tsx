@@ -591,7 +591,7 @@ export default function App() {
             />
           </button>
           <img
-            src="/nombre.png"
+            src="/nombre.svg"
             alt="La Catedral"
             className="h-6 sm:h-8 w-auto object-contain"
           />

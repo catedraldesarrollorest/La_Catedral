@@ -51,8 +51,8 @@ export default async function handler(req, res) {
     try {
       const { menuItems, galleryItems, generalInfo } = req.body;
 
-      if (menuItems) {
-        await supabase.from('menu_items').upsert(
+      if (menuItems && menuItems.length > 0) {
+        const { error: menuError } = await supabase.from('menu_items').upsert(
           menuItems.map((item) => ({
             id: item.id,
             category: item.category,
@@ -65,20 +65,28 @@ export default async function handler(req, res) {
             available: item.available
           }))
         );
+        if (menuError) {
+          console.error('Menu items upsert error:', menuError);
+          return res.status(500).json({ error: `Menu items error: ${menuError.message}` });
+        }
       }
 
-      if (galleryItems) {
-        await supabase.from('gallery_items').upsert(
+      if (galleryItems && galleryItems.length > 0) {
+        const { error: galleryError } = await supabase.from('gallery_items').upsert(
           galleryItems.map((item) => ({
             id: item.id,
             category: item.category,
             image_url: item.imageSrc
           }))
         );
+        if (galleryError) {
+          console.error('Gallery items upsert error:', galleryError);
+          return res.status(500).json({ error: `Gallery items error: ${galleryError.message}` });
+        }
       }
 
-      if (generalInfo) {
-        await supabase.from('general_info').upsert({
+      if (generalInfo && Object.keys(generalInfo).length > 0) {
+        const { error: infoError } = await supabase.from('general_info').upsert({
           id: 'default',
           phone: generalInfo.phone,
           email: generalInfo.email,
@@ -91,6 +99,10 @@ export default async function handler(req, res) {
           facebook: generalInfo.facebook,
           whatsapp_group: generalInfo.whatsappGroup
         });
+        if (infoError) {
+          console.error('General info upsert error:', infoError);
+          return res.status(500).json({ error: `General info error: ${infoError.message}` });
+        }
       }
 
       return res.status(200).json({ success: true });

@@ -982,7 +982,7 @@ export default function App() {
                     <img
                       src="/nombre.svg"
                       alt="La Catedral"
-                      className="h-10 w-auto object-contain"
+                      className="h-12 w-auto object-contain"
                       style={{filter: 'invert(1) brightness(1.1)'}}
                     />
                   </div>

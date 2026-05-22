@@ -26,13 +26,13 @@ export default async function handler(req, res) {
         menuItems: (menuRes.data || []).map((item) => ({
           id: item.id,
           category: item.category,
-          subcategory: item.subcategory,
           nameEs: item.name_es,
           nameEn: item.name_en,
-          descEs: item.desc_es,
-          descEn: item.desc_en,
-          price: item.price,
-          available: item.available
+          descEs: item.description_es,
+          descEn: item.description_en,
+          price: item.price.toString(),
+          available: item.is_available,
+          imageSrc: item.image_url
         })),
         galleryItems: (galleryRes.data || []).map((item) => ({
           id: item.id,
@@ -56,13 +56,13 @@ export default async function handler(req, res) {
           menuItems.map((item) => ({
             id: item.id,
             category: item.category,
-            subcategory: item.subcategory,
             name_es: item.nameEs,
             name_en: item.nameEn,
-            desc_es: item.descEs,
-            desc_en: item.descEn,
-            price: item.price,
-            available: item.available
+            description_es: item.descEs,
+            description_en: item.descEn,
+            price: parseFloat(item.price),
+            is_available: item.available,
+            image_url: item.imageSrc || null
           }))
         );
         if (menuError) {

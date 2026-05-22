@@ -974,8 +974,16 @@ export default function App() {
                 {/* Left side general branding */}
                 <div className="lg:col-span-5 space-y-6">
                   <div className="font-cinzel font-bold text-xl tracking-[0.25em] flex items-center gap-2">
-                    <span className="text-editorial-red text-2xl">✛</span>
-                    <span>LA CATEDRAL</span>
+                    <img
+                      src="/logo.png"
+                      alt="La Catedral Logo"
+                      className="h-8 w-auto object-contain"
+                    />
+                    <img
+                      src="/nombre.svg"
+                      alt="La Catedral"
+                      className="h-8 w-auto object-contain brightness-200"
+                    />
                   </div>
                   <p className="text-xs text-stone-400 font-light leading-relaxed max-w-md">
                     {lang === 'es' ? (

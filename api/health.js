@@ -10,17 +10,24 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   try {
+    console.log('Health check started');
+    console.log('Supabase URL:', 'https://hadbwpdcpimylcjqeoph.supabase.com');
+
     // Test basic Supabase connectivity
+    console.log('Attempting to query menu_items...');
     const { data: menuData, error: menuError, count: menuCount } = await supabase
       .from('menu_items')
       .select('*', { count: 'exact', head: true });
+
+    console.log('Menu query response:', { error: menuError, count: menuCount });
 
     if (menuError) {
       return res.status(500).json({
         status: 'error',
         message: 'Failed to query menu_items',
         error: menuError.message,
-        code: menuError.code
+        code: menuError.code,
+        details: menuError
       });
     }
 

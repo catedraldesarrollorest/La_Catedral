@@ -635,6 +635,16 @@ export default function App() {
                   <span className="text-[11px] uppercase tracking-[0.4em] text-stone-400 font-semibold block">
                     {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
                   </span>
+
+                  {/* Logo in Hero Section */}
+                  <div className="flex items-center justify-start mb-4">
+                    <img
+                      src="/logo.svg"
+                      alt="La Catedral Logo"
+                      className="h-20 sm:h-32 w-auto object-contain opacity-75"
+                    />
+                  </div>
+
                   <h1 className="text-6xl sm:text-8xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
                     LA <br className="hidden sm:inline" />
                     CATEDRAL

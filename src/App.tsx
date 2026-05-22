@@ -189,50 +189,20 @@ export default function App() {
   const fetchState = async () => {
     setLoading(true);
     try {
-      const [menuRes, galleryRes, infoRes] = await Promise.all([
-        supabase.from('menu_items').select('*'),
-        supabase.from('gallery_items').select('*'),
-        supabase.from('general_info').select('*').eq('id', 'default')
-      ]);
+      const response = await fetch('/api/sync');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
 
-      const menuItems = (menuRes.data || []).map((item: any) => ({
-        id: item.id,
-        category: item.category,
-        subcategory: item.subcategory,
-        nameEs: item.name_es,
-        nameEn: item.name_en,
-        descEs: item.desc_es,
-        descEn: item.desc_en,
-        price: item.price,
-        available: item.available
-      }));
-
-      const galleryItems = (galleryRes.data || []).map((item: any) => ({
-        id: item.id,
-        category: item.category,
-        imageSrc: item.image_url
-      }));
-
-      const generalInfo = infoRes.data?.[0] ? {
-        phone: infoRes.data[0].phone || '',
-        email: infoRes.data[0].email || '',
-        address: infoRes.data[0].address || '',
-        mapUrl: infoRes.data[0].map_url || '',
-        scheduleEs: infoRes.data[0].schedule_es || '',
-        scheduleEn: infoRes.data[0].schedule_en || '',
-        whatsapp: infoRes.data[0].whatsapp || '',
-        instagram: infoRes.data[0].instagram || '',
-        facebook: infoRes.data[0].facebook || '',
-        whatsappGroup: infoRes.data[0].whatsapp_group || ''
-      } : initialGeneralInfo;
-
-      const state: AppState = { menuItems, galleryItems, generalInfo };
-      setState(state);
-      setEditedInfo(generalInfo);
+      setState({
+        menuItems: data.menuItems || [],
+        galleryItems: data.galleryItems || [],
+        generalInfo: data.generalInfo || initialGeneralInfo
+      });
+      setEditedInfo(data.generalInfo || initialGeneralInfo);
       setError(null);
       setIsLocalMode(false);
     } catch (err: any) {
-      console.warn('Supabase not available, falling back to LocalStorage Mode.', err);
+      console.warn('Backend not available, using localStorage', err);
       setIsLocalMode(true);
 
       const localDataStr = localStorage.getItem('catedral_rest_state');
@@ -244,7 +214,7 @@ export default function App() {
           setError(null);
           return;
         } catch (parseErr) {
-          console.error('Error parsing localStorage state', parseErr);
+          console.error('Error parsing localStorage', parseErr);
         }
       }
 
@@ -263,8 +233,6 @@ export default function App() {
 
   const saveStateToServer = async (updatedState: AppState, message: string = 'Cambios guardados con éxito') => {
     setSaveStatus('saving');
-
-    // Always persist to localStorage
     localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
 
     if (isLocalMode) {
@@ -277,53 +245,18 @@ export default function App() {
     }
 
     try {
-      // Save menu items
-      if (updatedState.menuItems.length > 0) {
-        const menuData = updatedState.menuItems.map((item) => ({
-          id: item.id,
-          category: item.category,
-          subcategory: item.subcategory,
-          name_es: item.nameEs,
-          name_en: item.nameEn,
-          desc_es: item.descEs,
-          desc_en: item.descEn,
-          price: item.price,
-          available: item.available
-        }));
-        await supabase.from('menu_items').upsert(menuData);
-      }
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedState)
+      });
 
-      // Save gallery items
-      if (updatedState.galleryItems.length > 0) {
-        const galleryData = updatedState.galleryItems.map((item) => ({
-          id: item.id,
-          category: item.category,
-          image_url: item.imageSrc
-        }));
-        await supabase.from('gallery_items').upsert(galleryData);
-      }
-
-      // Save general info
-      const infoData = {
-        id: 'default',
-        phone: updatedState.generalInfo.phone,
-        email: updatedState.generalInfo.email,
-        address: updatedState.generalInfo.address,
-        map_url: updatedState.generalInfo.mapUrl,
-        schedule_es: updatedState.generalInfo.scheduleEs,
-        schedule_en: updatedState.generalInfo.scheduleEn,
-        whatsapp: updatedState.generalInfo.whatsapp,
-        instagram: updatedState.generalInfo.instagram,
-        facebook: updatedState.generalInfo.facebook,
-        whatsapp_group: updatedState.generalInfo.whatsappGroup
-      };
-      await supabase.from('general_info').upsert(infoData);
-
+      if (!response.ok) throw new Error('Failed to save');
       setState(updatedState);
       setSaveStatus('success');
       showToast(message);
     } catch (err) {
-      console.error('Failed to save to Supabase, falling back to local state save', err);
+      console.error('Failed to save, using localStorage', err);
       setState(updatedState);
       setSaveStatus('success');
       showToast(message + ' (Guardado localmente)');
@@ -349,7 +282,7 @@ export default function App() {
         setState(defaultState);
         setEditedInfo(initialGeneralInfo);
         setSaveStatus('success');
-        showToast('Se han reestablecido los datos originales del restaurante (local).');
+        showToast('Se han reestablecido los datos originales (local).');
         setIsAuthenticated(false);
         setAdminOpen(false);
       }, 300);
@@ -357,60 +290,23 @@ export default function App() {
     }
 
     try {
-      // Delete all existing items
-      await supabase.from('menu_items').delete().neq('id', '');
-      await supabase.from('gallery_items').delete().neq('id', '');
-
-      // Insert defaults
-      const menuData = initialMenuItems.map((item) => ({
-        id: item.id,
-        category: item.category,
-        subcategory: item.subcategory,
-        name_es: item.nameEs,
-        name_en: item.nameEn,
-        desc_es: item.descEs,
-        desc_en: item.descEn,
-        price: item.price,
-        available: item.available
-      }));
-
-      const galleryData = initialGalleryItems.map((item) => ({
-        id: item.id,
-        category: item.category,
-        image_url: item.imageSrc
-      }));
-
-      const infoData = {
-        id: 'default',
-        phone: initialGeneralInfo.phone,
-        email: initialGeneralInfo.email,
-        address: initialGeneralInfo.address,
-        map_url: initialGeneralInfo.mapUrl,
-        schedule_es: initialGeneralInfo.scheduleEs,
-        schedule_en: initialGeneralInfo.scheduleEn,
-        whatsapp: initialGeneralInfo.whatsapp,
-        instagram: initialGeneralInfo.instagram,
-        facebook: initialGeneralInfo.facebook,
-        whatsapp_group: initialGeneralInfo.whatsappGroup
-      };
-
-      await Promise.all([
-        supabase.from('menu_items').insert(menuData),
-        supabase.from('gallery_items').insert(galleryData),
-        supabase.from('general_info').upsert(infoData)
-      ]);
+      await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(defaultState)
+      });
 
       setState(defaultState);
       setEditedInfo(initialGeneralInfo);
       setSaveStatus('success');
-      showToast('Se han reestablecido los datos originales del restaurante.');
+      showToast('Se han reestablecido los datos originales.');
       setIsAuthenticated(false);
       setAdminOpen(false);
     } catch (err) {
       setState(defaultState);
       setEditedInfo(initialGeneralInfo);
       setSaveStatus('success');
-      showToast('Se han reestablecido los datos del restaurante (local).');
+      showToast('Se han reestablecido los datos (local).');
       setIsAuthenticated(false);
       setAdminOpen(false);
     }

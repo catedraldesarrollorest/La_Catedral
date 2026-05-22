@@ -578,7 +578,7 @@ export default function App() {
         </div>
 
         {/* Elegant Center Emblem Logo (Secret Trigger) */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <button
             onClick={() => setAdminOpen(true)}
             className="cursor-pointer bg-transparent border-none outline-none transition-all p-0 hover:scale-110"
@@ -590,7 +590,11 @@ export default function App() {
               className="h-8 sm:h-10 w-auto object-contain"
             />
           </button>
-          <span className="font-cinzel text-sm sm:text-lg font-bold tracking-[0.25em] text-editorial-dark select-none">LA CATEDRAL</span>
+          <img
+            src="/nombre.png"
+            alt="La Catedral"
+            className="h-6 sm:h-8 w-auto object-contain"
+          />
         </div>
 
         {/* Desktop Right Nav Links */}

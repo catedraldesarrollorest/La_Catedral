@@ -578,18 +578,19 @@ export default function App() {
         </div>
 
         {/* Elegant Center Emblem Logo (Secret Trigger) */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <div className="font-cinzel text-sm sm:text-lg font-bold tracking-[0.25em] flex items-center gap-2">
-            {/* The templar cross symbol opens the administration portal when clicked */}
-            <button
-              onClick={() => setAdminOpen(true)}
-              className="text-editorial-red text-md sm:text-l leading-none opacity-50 hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-1"
-              title="Portal"
-            >
-              ✛
-            </button>
-            <span className="text-editorial-dark select-none">LA CATEDRAL</span>
-          </div>
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <button
+            onClick={() => setAdminOpen(true)}
+            className="opacity-50 hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-0"
+            title="Portal"
+          >
+            <img
+              src="/logo.png"
+              alt="La Catedral Logo"
+              className="h-8 sm:h-10 w-auto object-contain"
+            />
+          </button>
+          <span className="font-cinzel text-sm sm:text-lg font-bold tracking-[0.25em] text-editorial-dark select-none">LA CATEDRAL</span>
         </div>
 
         {/* Desktop Right Nav Links */}

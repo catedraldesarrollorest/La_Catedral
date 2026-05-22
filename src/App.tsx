@@ -585,7 +585,7 @@ export default function App() {
             title="Portal"
           >
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="La Catedral Logo"
               className="h-8 sm:h-10 w-auto object-contain"
             />
@@ -639,7 +639,7 @@ export default function App() {
                   {/* Logo in Hero Section */}
                   <div className="flex items-center justify-start mb-4">
                     <img
-                      src="/logo.png"
+                      src="/logo.svg"
                       alt="La Catedral Logo"
                       className="h-20 sm:h-32 w-auto object-contain opacity-75"
                     />

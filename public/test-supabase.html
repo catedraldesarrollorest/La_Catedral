@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Connection Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Supabase Connection Test</h1>
+  <p>Testing connection to Supabase...</p>
+  <div id="result"></div>
+
+  <script>
+    (async () => {
+      try {
+        const { createClient } = window.supabase;
+        const supabase = createClient(
+          'https://hadbwpdcpimylcjqeoph.supabase.com',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhZGJ3cGRjcGlteWxjanFlb3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzcyMTksImV4cCI6MjA5NDg1MzIxOX0.Zrcz1RYUiUzSkQNAOHzb93vX2FpCwmMNylFtEPMzpBs'
+        );
+
+        console.log('✅ Supabase client created');
+
+        const { data, error } = await supabase.from('menu_items').select('count', { count: 'exact' });
+
+        if (error) {
+          document.getElementById('result').innerHTML = `
+            <p class="error">❌ Error:</p>
+            <pre>${JSON.stringify(error, null, 2)}</pre>
+          `;
+        } else {
+          document.getElementById('result').innerHTML = `
+            <p class="success">✅ Connected to Supabase!</p>
+            <p>Total menu items: ${data}</p>
+          `;
+        }
+      } catch (err) {
+        document.getElementById('result').innerHTML = `
+          <p class="error">❌ Exception:</p>
+          <pre>${err.message}</pre>
+        `;
+      }
+    })();
+  </script>
+</body>
+</html>

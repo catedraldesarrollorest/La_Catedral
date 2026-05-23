@@ -2251,8 +2251,8 @@ export default function App() {
                             }}
                           >
 
-                            {/* Overlay background for menu pages */}
-                            {selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && selectedPageIndex !== 0 && (
+                            {/* Overlay background - Only for cover page */}
+                            {selectedPageIndex === 0 && selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && (
                               <div
                                 className="absolute inset-0 pointer-events-none z-0"
                                 style={{

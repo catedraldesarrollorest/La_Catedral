@@ -21,6 +21,8 @@ export interface MenuPageConfig {
   coverTitle: string;
   coverSubtitle: string;
   backgroundImage: string;
+  coverLogo?: string;
+  coverSecondaryImage?: string;
   bgOpacity: number;
   categories: Array<'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>;
   columns: 1 | 2;
@@ -56,6 +58,8 @@ export default function App() {
       coverTitle: 'LA CATEDRAL',
       coverSubtitle: 'RESTAURANTE & BAR',
       backgroundImage: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop',
+      coverLogo: '/logo.png',
+      coverSecondaryImage: '',
       bgOpacity: 55,
       categories: [],
       columns: 1,
@@ -1933,6 +1937,30 @@ export default function App() {
                                     className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-xs focus:outline-none focus:border-editorial-red rounded-sm"
                                   />
                                 </div>
+                                {selectedPage.type === 'cover' && (
+                                  <>
+                                    <div className="space-y-0.5">
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Logo de la Portada (URL)</label>
+                                      <input
+                                        type="text"
+                                        value={selectedPage.coverLogo || ''}
+                                        onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
+                                        placeholder="URL del logo o /logo.png"
+                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                      />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Imagen Secundaria (URL)</label>
+                                      <input
+                                        type="text"
+                                        value={selectedPage.coverSecondaryImage || ''}
+                                        onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
+                                        placeholder="URL de imagen secundaria opcional"
+                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                      />
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               {/* Background Options */}
@@ -2168,7 +2196,16 @@ export default function App() {
                             {/* Render Cover inside Live Preview */}
                             {selectedPage.type === 'cover' ? (
                               <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-double border-stone-800">
-                                <div className="text-xl font-cinzel text-editorial-red mb-1">✛</div>
+                                {selectedPage.coverSecondaryImage && (
+                                  <img src={selectedPage.coverSecondaryImage} alt="Secondary" className="h-20 w-auto object-contain mb-4 opacity-80" />
+                                )}
+
+                                {selectedPage.coverLogo ? (
+                                  <img src={selectedPage.coverLogo} alt="Logo" className="h-12 w-auto object-contain mb-2" />
+                                ) : (
+                                  <div className="text-xl font-cinzel text-editorial-red mb-1">✛</div>
+                                )}
+
                                 <h3 className="font-cinzel text-2xl sm:text-3xl font-extrabold tracking-[0.2em] text-stone-900 uppercase">
                                   {selectedPage.coverTitle || 'LA CATEDRAL'}
                                 </h3>
@@ -2176,7 +2213,7 @@ export default function App() {
                                 <h4 className="font-sans text-[8px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
                                   {selectedPage.coverSubtitle || 'RESTAURANTE & BAR'}
                                 </h4>
-                                
+
                                 <div className="absolute bottom-4 text-[7px] uppercase tracking-widest text-stone-400 font-serif">
                                   La Habana, Cuba
                                 </div>

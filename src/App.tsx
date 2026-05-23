@@ -1349,7 +1349,14 @@ export default function App() {
                               <div className="p-4 space-y-2">
                                 <p className="text-sm text-stone-600">{getFilteredItemsForAdmin().length} productos encontrados</p>
                                 {getFilteredItemsForAdmin().map(item => (
-                                  <div key={item.id} className="p-3 bg-white border border-stone-200 rounded">
+                                  <div key={item.id} className="p-3 bg-white border border-stone-200 rounded cursor-pointer hover:bg-stone-50 transition-colors" onClick={() => {
+                                    try {
+                                      setEditingItem(item);
+                                      setIsAddingNew(false);
+                                    } catch(e) {
+                                      console.error('Error setting editing item:', e);
+                                    }
+                                  }}>
                                     <p className="text-sm font-semibold">{item.nameEs}</p>
                                     <p className="text-xs text-stone-500">Precio: {item.price}</p>
                                   </div>

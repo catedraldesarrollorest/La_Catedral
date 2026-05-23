@@ -1346,83 +1346,15 @@ export default function App() {
                                 <p className="text-xs uppercase tracking-widest font-cinzel">No se encontraron platos</p>
                               </div>
                             ) : (
-                              getFilteredItemsForAdmin().map(item => (
-                                <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50 transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.available}
-                                    onChange={() => { /* disabled for debugging */ }}
-                                    className="w-5 h-5 cursor-pointer shrink-0"
-                                    title={lang === 'es' ? 'Disponible' : 'Available'}
-                                  />
-                                  <div className="space-y-1 min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-[8px] uppercase tracking-widest font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 border border-stone-200">
-                                        {item.category.toUpperCase()}
-                                      </span>
-                                      <span className="text-[9px] text-stone-400 italic">
-                                        {item.subcategory}
-                                      </span>
-                                    </div>
-                                    <h4 className="font-serif font-semibold text-base text-editorial-dark truncate">
-                                      {item.nameEs || <span className="text-stone-300 italic">Sin título</span>} 
-                                      <span className="text-stone-400 font-sans font-light text-xs ml-2">
-                                        {item.nameEn && `/ ${item.nameEn}`}
-                                      </span>
-                                    </h4>
-                                    <p className="text-xs text-stone-500 font-medium tracking-wider">
-                                      {lang === 'es' ? 'Precio: ' : 'Price: '} 
-                                      <span className="text-editorial-red font-semibold">{item.price}</span>
-                                    </p>
+                              <div className="p-4 space-y-2">
+                                <p className="text-sm text-stone-600">{getFilteredItemsForAdmin().length} productos encontrados</p>
+                                {getFilteredItemsForAdmin().map(item => (
+                                  <div key={item.id} className="p-3 bg-white border border-stone-200 rounded">
+                                    <p className="text-sm font-semibold">{item.nameEs}</p>
+                                    <p className="text-xs text-stone-500">Precio: {item.price}</p>
                                   </div>
-
-                                  {/* Availability toggles + actions */}
-                                  <div className="flex items-center gap-4 shrink-0 justify-end">
-                                    
-                                    {/* Available Box switch toggle - DISABLED FOR DEBUGGING */}
-                                    <button
-                                      onClick={() => { /* disabled for debugging */ }}
-                                      className={`cursor-pointer text-[10px] uppercase font-semibold tracking-widest px-3 py-1.5 border flex items-center gap-1 transition-all ${
-                                        item.available
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                          : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                                      }`}
-                                    >
-                                      {item.available ? (
-                                        <>
-                                          <Check className="w-3 h-3 text-emerald-500" />
-                                          <span>{lang === 'es' ? 'Disponible' : 'Available'}</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <X className="w-3 h-3 text-stone-400" />
-                                          <span>{lang === 'es' ? 'Agotado' : 'Sold Out'}</span>
-                                        </>
-                                      )}
-                                    </button>
-
-                                    {/* Action items */}
-                                    <div className="flex gap-1.5">
-                                      <button
-                                        onClick={() => { /* disabled for debugging */ }}
-                                        className="p-2 border border-stone-200 bg-white hover:border-editorial-dark hover:text-editorial-dark text-stone-500 transition-colors cursor-pointer"
-                                        title={lang === 'es' ? 'Editar' : 'Edit'}
-                                      >
-                                        <Edit className="w-3.5 h-3.5" />
-                                      </button>
-                                      
-                                      <button
-                                        onClick={() => { /* disabled for debugging */ }}
-                                        className="p-2 border border-stone-200 bg-white hover:border-editorial-red hover:text-editorial-red text-stone-500 transition-colors cursor-pointer"
-                                        title={lang === 'es' ? 'Eliminar' : 'Delete'}
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-
-                                  </div>
-                                </div>
-                              ))
+                                ))}
+                              </div>
                             )}
                           </div>
 

@@ -169,6 +169,7 @@ export default function App() {
   // Menu management inside Admin
   const [menuFilter, setMenuFilter] = useState<string>('');
   const [menuEditCategory, setMenuEditCategory] = useState<'all' | 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>('all');
+  const [priceMultiplier, setPriceMultiplier] = useState<number>(1);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState<boolean>(false);
 
@@ -440,6 +441,25 @@ export default function App() {
     });
     const updatedState = { ...state, menuItems: updatedMenuItems };
     saveStateToServer(updatedState, 'Disponibilidad actualizada.');
+  };
+
+  const applyPriceMultiplier = (multiplier: number) => {
+    if (!state || multiplier <= 0) return;
+
+    const updatedMenuItems = state.menuItems.map(item => {
+      const categoryMatch = menuEditCategory === 'all' || item.category === menuEditCategory;
+      if (categoryMatch) {
+        const currentPrice = parseFloat(item.price.toString());
+        const newPrice = Math.round(currentPrice * multiplier * 100) / 100;
+        return { ...item, price: newPrice.toString() };
+      }
+      return item;
+    });
+
+    const updatedState = { ...state, menuItems: updatedMenuItems };
+    const categoryLabel = menuEditCategory === 'all' ? 'todo el menú' : `${menuEditCategory}`;
+    saveStateToServer(updatedState, `Precios actualizados para ${categoryLabel} (${multiplier.toFixed(2)}x)`);
+    setPriceMultiplier(1);
   };
 
   const initiateAddNewItem = () => {
@@ -1336,6 +1356,48 @@ export default function App() {
                                 {cat === 'all' ? (lang === 'es' ? 'Todos' : 'All') : cat.toUpperCase()}
                               </button>
                             ))}
+                          </div>
+
+                          {/* Price Multiplier Slider */}
+                          <div className="bg-white border border-editorial-dark/10 p-6 space-y-4">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <label className="block text-xs uppercase tracking-widest font-semibold text-stone-700 mb-3">
+                                  {lang === 'es' ? 'Ajustar Precios' : 'Price Adjustment'} ({priceMultiplier.toFixed(2)}x)
+                                </label>
+                                <input
+                                  type="range"
+                                  min="0.5"
+                                  max="2.5"
+                                  step="0.1"
+                                  value={priceMultiplier}
+                                  onChange={(e) => setPriceMultiplier(parseFloat(e.target.value))}
+                                  className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-editorial-red"
+                                />
+                                <div className="flex justify-between text-[9px] text-stone-500 mt-2">
+                                  <span>0.5x</span>
+                                  <span>1.0x</span>
+                                  <span>2.5x</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => applyPriceMultiplier(priceMultiplier)}
+                                disabled={priceMultiplier === 1}
+                                className={`px-4 py-2 text-[10px] uppercase tracking-widest font-semibold rounded transition-all shrink-0 ${
+                                  priceMultiplier === 1
+                                    ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                                    : 'bg-editorial-red text-white hover:bg-editorial-dark'
+                                }`}
+                              >
+                                {lang === 'es' ? 'Aplicar' : 'Apply'}
+                              </button>
+                            </div>
+                            <p className="text-[9px] text-stone-500">
+                              {lang === 'es'
+                                ? `Se aplicará a ${menuEditCategory === 'all' ? 'TODO EL MENÚ' : menuEditCategory.toUpperCase()}`
+                                : `Will apply to ${menuEditCategory === 'all' ? 'ALL MENU' : menuEditCategory.toUpperCase()}`
+                              }
+                            </p>
                           </div>
 
                           {/* Render Items Table or Grid rows */}

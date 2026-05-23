@@ -62,8 +62,12 @@ export default async function handler(req, res) {
     try {
       const { menuItems, galleryItems, generalInfo } = req.body;
 
+      // Delete all existing menu items first
+      await supabase.from('menu_items').delete().neq('id', '');
+
+      // Then insert the new ones
       if (menuItems && menuItems.length > 0) {
-        const { error: menuError } = await supabase.from('menu_items').upsert(
+        const { error: menuError } = await supabase.from('menu_items').insert(
           menuItems.map((item) => ({
             id: item.id,
             category: item.category,
@@ -77,7 +81,7 @@ export default async function handler(req, res) {
           }))
         );
         if (menuError) {
-          console.error('Menu items upsert error:', menuError);
+          console.error('Menu items insert error:', menuError);
           return res.status(500).json({ error: `Menu items error: ${menuError.message}` });
         }
       }

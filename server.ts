@@ -182,6 +182,41 @@ async function startServer() {
   app.post('/api/state', handlePostState);
   app.post('/api/sync', handlePostState);
 
+  // === DIAGNOSTIC ENDPOINT ===
+  app.get('/api/diagnostic', async (req, res) => {
+    try {
+      const state = await fetchStateFromSupabase();
+      const diagnostic = {
+        timestamp: new Date().toISOString(),
+        supabaseConfigured: !!supabase,
+        menuItemsCount: state.menuItems.length,
+        firstMenuItem: state.menuItems[0] || null,
+        allMenuItems: state.menuItems.map((item, idx) => ({
+          idx,
+          id: item.id,
+          nameEs: item.nameEs,
+          category: item.category,
+          hasAllFields: !!(item.id && item.nameEs && item.category && item.price)
+        })),
+        validationErrors: state.menuItems
+          .map((item, idx) => ({
+            idx,
+            id: item.id,
+            errors: [
+              !item.id ? 'missing id' : null,
+              !item.nameEs ? 'missing nameEs' : null,
+              !item.category ? 'missing category' : null,
+              !item.price ? 'missing price' : null
+            ].filter(Boolean)
+          }))
+          .filter(v => v.errors.length > 0)
+      };
+      res.json(diagnostic);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   // API Route: Reset to defaults
   app.post('/api/state/reset', async (req, res) => {
     try {

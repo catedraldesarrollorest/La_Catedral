@@ -1857,7 +1857,7 @@ export default function App() {
                                   <div className="flex items-center gap-2 min-w-0">
                                     <span className="text-[8px] font-mono text-stone-400 font-semibold">{index + 1}</span>
                                     <span className="text-[10px] truncate max-w-[120px] uppercase tracking-wider">
-                                      {page.type === 'cover' ? `📙 Portada: ${page.coverTitle || 'Sin tít.'}` : `📄 Menú: ${page.categories.join(' + ').toUpperCase() || 'Vacío'}`}
+                                      {index === 0 ? `📙 Portada: ${page.coverTitle || 'Sin tít.'}` : `📄 Menú: ${page.categories.join(' + ').toUpperCase() || 'Vacío'}`}
                                     </span>
                                   </div>
 
@@ -1898,30 +1898,6 @@ export default function App() {
                                 Configurar Página {pdfPages.findIndex(p => p.id === selectedPdfPageId) + 1}
                               </h4>
 
-                              {/* Page Type Selector */}
-                              <div className="space-y-1">
-                                <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Tipo de Página</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateSelectedPage({ type: 'cover' })}
-                                    className={`px-3 py-1.5 text-[9px] uppercase tracking-wider font-semibold border text-center rounded-sm transition-all cursor-pointer ${
-                                      selectedPage.type === 'cover' ? 'bg-editorial-dark text-white border-editorial-dark' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
-                                    }`}
-                                  >
-                                    📙 Portada
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateSelectedPage({ type: 'menu' })}
-                                    className={`px-3 py-1.5 text-[9px] uppercase tracking-wider font-semibold border text-center rounded-sm transition-all cursor-pointer ${
-                                      selectedPage.type === 'menu' ? 'bg-editorial-dark text-white border-editorial-dark' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
-                                    }`}
-                                  >
-                                    📄 Menú Carta
-                                  </button>
-                                </div>
-                              </div>
 
                               {/* Title / Subtitle Text Override */}
                               <div className="grid grid-cols-1 gap-2">
@@ -1945,7 +1921,7 @@ export default function App() {
                                     className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-xs focus:outline-none focus:border-editorial-red rounded-sm"
                                   />
                                 </div>
-                                {selectedPage.type === 'cover' && (
+                                {selectedPageIndex === 0 && (
                                   <div className="space-y-3 border-t border-stone-200 pt-3">
                                     {/* Logo Upload & Size */}
                                     <div className="space-y-2">
@@ -2041,7 +2017,7 @@ export default function App() {
                               </div>
 
                               {/* Background Options - Only for Cover Pages */}
-                              {selectedPage.type === 'cover' && (
+                              {selectedPageIndex === 0 && (
                                 <div className="space-y-2">
                                   <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Fondo de la Página</label>
 
@@ -2129,7 +2105,7 @@ export default function App() {
                               )}
 
                               {/* Menu Settings Category selection (Only on Menu Page) */}
-                              {selectedPage.type === 'menu' && (
+                              {selectedPageIndex !== 0 && (
                                 <div className="space-y-2 border-t border-stone-100 pt-3">
                                   <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Agrupar platos en esta página</label>
                                   <div className="space-y-1.5">
@@ -2171,7 +2147,7 @@ export default function App() {
                               )}
 
                               {/* Layout Design Customization Columns-Font Font Scale (Only on Menu Page) */}
-                              {selectedPage.type === 'menu' && (
+                              {selectedPageIndex !== 0 && (
                                 <div className="space-y-3 border-t border-stone-100 pt-3">
                                   <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Ajustes de Diseño</label>
                                   
@@ -2260,7 +2236,7 @@ export default function App() {
                             className="w-[100%] max-w-[480px] aspect-[210/297] text-stone-900 relative shadow-2xl overflow-hidden flex flex-col justify-between p-[8%] animate-fade-in border border-white"
                             style={{
                               backgroundColor:
-                                selectedPage.type === 'cover'
+                                selectedPageIndex === 0
                                   ? selectedPage.backgroundColor || '#ffffff'
                                   : '#ffffff',
                               backgroundImage:
@@ -2275,7 +2251,7 @@ export default function App() {
                           >
 
                             {/* Overlay background for menu pages */}
-                            {selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && selectedPage.type !== 'cover' && (
+                            {selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && selectedPageIndex !== 0 && (
                               <div
                                 className="absolute inset-0 pointer-events-none z-0"
                                 style={{
@@ -2289,7 +2265,7 @@ export default function App() {
                             )}
 
                             {/* Render Cover inside Live Preview */}
-                            {selectedPage.type === 'cover' ? (
+                            {selectedPageIndex === 0 ? (
                               <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-4">
                                 {selectedPage.coverSecondaryImage && (
                                   <img src={selectedPage.coverSecondaryImage} alt="Secondary" className="mb-4 object-contain opacity-90" style={{ maxHeight: '80px' }} />
@@ -2537,7 +2513,7 @@ export default function App() {
             )}
 
             {/* Cover Layout Rendering */}
-            {page.type === 'cover' ? (
+            {index === 0 ? (
               <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-8 border-4 border-double border-stone-800 h-full">
                 <div className="text-3xl font-cinzel text-editorial-red mb-2">✛</div>
                 <h1 className="font-cinzel text-4xl sm:text-5xl font-bold tracking-[0.25em] text-stone-900 uppercase">

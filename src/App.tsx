@@ -47,190 +47,58 @@ const validateMenuItem = (item: MenuItem): { valid: boolean; errors: string[] } 
 };
 
 // === ERROR BOUNDARY COMPONENT ===
-// === EDIT FORM COMPONENT - BULLETPROOF ===
-interface EditMenuItemFormProps {
-  item: MenuItem;
-  onSave: (item: MenuItem) => void;
-  onCancel: () => void;
-  isNew: boolean;
-  lang: 'es' | 'en';
-}
-
-function EditMenuItemForm({ item, onSave, onCancel, isNew, lang }: EditMenuItemFormProps) {
-  const [localItem, setLocalItem] = React.useState<MenuItem>(item);
-  const [error, setError] = React.useState<string>('');
-
-  // Validate before render
-  if (!localItem?.id || !localItem?.nameEs) {
-    return (
-      <div className="p-8 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-        ❌ Error: Item is invalid. {!localItem?.id ? 'Missing ID.' : ''} {!localItem?.nameEs ? 'Missing name.' : ''}
-      </div>
-    );
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Validate before save
-      if (!localItem.id) throw new Error('ID is required');
-      if (!localItem.nameEs) throw new Error('Spanish name is required');
-      if (!localItem.category) throw new Error('Category is required');
-
-      onSave(localItem);
-    } catch (err) {
-      setError((err as any).message);
-    }
-  };
-
+// === ULTRA-SIMPLE EDIT FORM ===
+function SimpleEditForm({ item, onSave, onCancel }: { item: MenuItem; onSave: (item: MenuItem) => void; onCancel: () => void }) {
   return (
-    <>
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-          ❌ {error}
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
-        <div className="flex justify-between items-center border-b border-stone-100 pb-4">
-          <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
-            {isNew ? (lang === 'es' ? 'NUEVO ELEMENTO' : 'ADD ITEM') : (lang === 'es' ? 'EDITAR ELEMENTO' : 'EDIT ITEM')}
-          </h3>
-          <button type="button" onClick={onCancel} className="text-stone-400 hover:text-stone-700 text-[10px] uppercase font-bold">
-            {lang === 'es' ? 'Cancelar' : 'Cancel'}
-          </button>
-        </div>
+    <div style={{ padding: '20px', background: '#fff', border: '1px solid #ddd' }}>
+      <h2 style={{ marginBottom: '20px' }}>{item.nameEs}</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Category */}
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Categoría' : 'Category'}
-            </label>
-            <select
-              value={localItem.category}
-              onChange={(e) => setLocalItem({ ...localItem, category: e.target.value as any })}
-              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
-            >
-              <option value="bebidas">Bebidas</option>
-              <option value="primeros">Primeros</option>
-              <option value="principales">Principales</option>
-              <option value="postres">Postres</option>
-              <option value="espirituosos">Espirituosos</option>
-            </select>
-          </div>
+      <div style={{ marginBottom: '15px' }}>
+        <label>Nombre (ES):</label><br />
+        <input
+          type="text"
+          defaultValue={item.nameEs}
+          onChange={(e) => item.nameEs = e.target.value}
+          style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+        />
+      </div>
 
-          {/* Subcategory */}
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Subcategoría' : 'Subcategory'}
-            </label>
-            <input
-              type="text"
-              value={localItem.subcategory}
-              onChange={(e) => setLocalItem({ ...localItem, subcategory: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-editorial-red"
-            />
-          </div>
+      <div style={{ marginBottom: '15px' }}>
+        <label>Precio:</label><br />
+        <input
+          type="text"
+          defaultValue={item.price}
+          onChange={(e) => item.price = e.target.value}
+          style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+        />
+      </div>
 
-          {/* Name ES */}
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Nombre (Español)' : 'Name (Spanish)'}
-            </label>
-            <input
-              type="text"
-              value={localItem.nameEs}
-              onChange={(e) => setLocalItem({ ...localItem, nameEs: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
-              required
-            />
-          </div>
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          <input
+            type="checkbox"
+            defaultChecked={item.available}
+            onChange={(e) => item.available = e.target.checked}
+          />
+          {' '}Disponible
+        </label>
+      </div>
 
-          {/* Name EN */}
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Nombre (Inglés)' : 'Name (English)'}
-            </label>
-            <input
-              type="text"
-              value={localItem.nameEn}
-              onChange={(e) => setLocalItem({ ...localItem, nameEn: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
-            />
-          </div>
-
-          {/* Description ES */}
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Descripción (Español)' : 'Description (Spanish)'}
-            </label>
-            <textarea
-              rows={2}
-              value={localItem.descEs}
-              onChange={(e) => setLocalItem({ ...localItem, descEs: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-            />
-          </div>
-
-          {/* Description EN */}
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Descripción (Inglés)' : 'Description (English)'}
-            </label>
-            <textarea
-              rows={2}
-              value={localItem.descEn}
-              onChange={(e) => setLocalItem({ ...localItem, descEn: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-            />
-          </div>
-
-          {/* Price */}
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-              {lang === 'es' ? 'Precio' : 'Price'}
-            </label>
-            <input
-              type="text"
-              value={localItem.price}
-              onChange={(e) => setLocalItem({ ...localItem, price: e.target.value })}
-              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
-              required
-            />
-          </div>
-
-          {/* Availability */}
-          <div className="flex items-center gap-2 sm:col-span-2">
-            <input
-              type="checkbox"
-              id="available_check"
-              checked={localItem.available}
-              onChange={(e) => setLocalItem({ ...localItem, available: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <label htmlFor="available_check" className="text-xs uppercase font-semibold text-stone-700 cursor-pointer">
-              {lang === 'es' ? 'Disponible' : 'Available'}
-            </label>
-          </div>
-        </div>
-
-        <div className="pt-4 flex gap-4">
-          <button
-            type="submit"
-            className="flex-1 bg-editorial-dark hover:bg-editorial-red text-white py-3 text-xs uppercase tracking-widest font-semibold"
-          >
-            {isNew ? (lang === 'es' ? 'Crear' : 'Create') : (lang === 'es' ? 'Guardar' : 'Save')}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="border border-stone-300 py-3 px-6 text-xs uppercase tracking-widest hover:bg-stone-50"
-          >
-            {lang === 'es' ? 'Cancelar' : 'Cancel'}
-          </button>
-        </div>
-      </form>
-    </>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button
+          onClick={() => onSave(item)}
+          style={{ flex: 1, padding: '10px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}
+        >
+          Guardar
+        </button>
+        <button
+          onClick={onCancel}
+          style={{ padding: '10px 20px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1673,10 +1541,9 @@ export default function App() {
 
                         </div>
                       ) : editingItem ? (
-                        <EditMenuItemForm
+                        <SimpleEditForm
                           item={editingItem}
                           onSave={(item) => {
-                            addDebugLog('💾 Saving: ' + item.nameEs);
                             setEditingItem(item);
                             handleSaveMenuItem({ preventDefault: () => {} } as any);
                           }}
@@ -1684,8 +1551,6 @@ export default function App() {
                             setEditingItem(null);
                             setIsAddingNew(false);
                           }}
-                          isNew={isAddingNew}
-                          lang={lang}
                         />
                       ) : null}
 

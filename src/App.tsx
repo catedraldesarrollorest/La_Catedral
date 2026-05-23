@@ -399,14 +399,24 @@ export default function App() {
     e.preventDefault();
     if (!state || !editingItem) return;
 
+    // Validate required fields
+    if (!editingItem.nameEs.trim()) {
+      showToast('Por favor completa el nombre en español');
+      return;
+    }
+    if (!editingItem.subcategory.trim()) {
+      showToast('Por favor completa la subcategoría');
+      return;
+    }
+
     let updatedMenuItems = [...state.menuItems];
-    
+
     if (isAddingNew) {
       // Add new
       updatedMenuItems.unshift(editingItem);
     } else {
       // Edit existing
-      updatedMenuItems = updatedMenuItems.map(item => 
+      updatedMenuItems = updatedMenuItems.map(item =>
         item.id === editingItem.id ? editingItem : item
       );
     }
@@ -1526,31 +1536,39 @@ export default function App() {
                             {/* Subcategory Label editable */}
                             <div className="space-y-1">
                               <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Subcategoría del menú
+                                Subcategoría del menú <span className="text-editorial-red">*</span>
                               </label>
-                              <input 
+                              <input
                                 type="text"
                                 placeholder="Ej: Sin Alcohol, Carnes, Tradicionales Cubanos"
                                 value={editingItem.subcategory}
                                 onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-editorial-red"
-                                required
+                                className={`w-full bg-stone-50 border px-3 py-2 text-xs focus:outline-none focus:border-editorial-red ${
+                                  editingItem.subcategory.trim() ? 'border-stone-300' : 'border-red-300'
+                                }`}
                               />
+                              {!editingItem.subcategory.trim() && (
+                                <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
+                              )}
                             </div>
 
                             {/* Spanish Product Name */}
                             <div className="space-y-1">
                               <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Nombre Oficial (Español)
+                                Nombre Oficial (Español) <span className="text-editorial-red">*</span>
                               </label>
-                              <input 
+                              <input
                                 type="text"
                                 placeholder="..."
                                 value={editingItem.nameEs}
                                 onChange={(e) => setEditingItem({ ...editingItem, nameEs: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold"
-                                required
+                                className={`w-full bg-stone-50 border px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold ${
+                                  editingItem.nameEs.trim() ? 'border-stone-300' : 'border-red-300'
+                                }`}
                               />
+                              {!editingItem.nameEs.trim() && (
+                                <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
+                              )}
                             </div>
 
                             {/* English Product Name */}

@@ -844,7 +844,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-6 sm:px-12">
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
                 <span className="text-[11px] uppercase tracking-[0.4em] text-editorial-red font-semibold block">
-                  {lang === 'es' ? 'La Carta' : 'Exclusive Menu'}
+                  {lang === 'es' ? 'Menu' : 'Exclusive Menu'}
                 </span>
                 <h2 className="text-4xl sm:text-5xl font-cinzel text-editorial-dark font-light">
                   {lang === 'es' ? 'Rendir Culto al Buen Saborear' : 'A Rite of Gastronomy'}

@@ -1379,12 +1379,12 @@ export default function App() {
                                   {/* Availability toggles + actions */}
                                   <div className="flex items-center gap-4 shrink-0 justify-end">
                                     
-                                    {/* Available Box switch toggle */}
-                                    <button 
-                                      onClick={() => handleToggleAvailability(item.id)}
+                                    {/* Available Box switch toggle - DISABLED FOR DEBUGGING */}
+                                    <button
+                                      onClick={() => { /* disabled for debugging */ }}
                                       className={`cursor-pointer text-[10px] uppercase font-semibold tracking-widest px-3 py-1.5 border flex items-center gap-1 transition-all ${
-                                        item.available 
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                                        item.available
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                                           : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
                                       }`}
                                     >

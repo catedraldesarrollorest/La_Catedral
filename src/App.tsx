@@ -2241,7 +2241,7 @@ export default function App() {
                                   ? selectedPage.backgroundColor || '#ffffff'
                                   : '#ffffff',
                               backgroundImage:
-                                selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0
+                                selectedPageIndex === 0 && selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0
                                   ? `url(${selectedPage.backgroundImage})`
                                   : 'none',
                               backgroundPosition: 'center',
@@ -2499,11 +2499,11 @@ export default function App() {
             className="print-page flex flex-col justify-between"
             style={{ pageBreakAfter: index === pdfPages.length - 1 ? 'avoid' : 'always' }}
           >
-            {/* Background Image Container */}
-            {page.backgroundImage && (
-              <div 
+            {/* Background Image Container - Only for Cover Page */}
+            {index === 0 && page.backgroundImage && (
+              <div
                 className="absolute inset-0 pointer-events-none z-0"
-                style={{ 
+                style={{
                   backgroundImage: `url(${page.backgroundImage})`,
                   backgroundPosition: 'center',
                   backgroundSize: 'cover',

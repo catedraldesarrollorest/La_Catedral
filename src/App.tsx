@@ -366,17 +366,25 @@ export default function App() {
   };
 
   const handleToggleAvailability = (id: string) => {
-    if (!state) return;
-    const updatedMenuItems = state.menuItems.map(item => {
-      if (item.id === id) {
-        const nextVal = !item.available;
-        showToast(`${item.nameEs} ahora está ${nextVal ? 'Disponible' : 'Agotado'}`);
-        return { ...item, available: nextVal };
+    try {
+      if (!state) {
+        console.warn('State is null/undefined in handleToggleAvailability');
+        return;
       }
-      return item;
-    });
-    const updatedState = { ...state, menuItems: updatedMenuItems };
-    saveStateToServer(updatedState, 'Disponibilidad actualizada.');
+      const updatedMenuItems = state.menuItems.map(item => {
+        if (item.id === id) {
+          const nextVal = !item.available;
+          showToast(`${item.nameEs} ahora está ${nextVal ? 'Disponible' : 'Agotado'}`);
+          return { ...item, available: nextVal };
+        }
+        return item;
+      });
+      const updatedState = { ...state, menuItems: updatedMenuItems };
+      saveStateToServer(updatedState, 'Disponibilidad actualizada.');
+    } catch (err) {
+      console.error('Error in handleToggleAvailability:', err);
+      showToast('Error al cambiar disponibilidad');
+    }
   };
 
   const applyPriceMultiplier = (multiplier: number) => {

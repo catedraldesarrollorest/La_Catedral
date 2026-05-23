@@ -1939,16 +1939,9 @@ export default function App() {
                                 </div>
                                 {selectedPage.type === 'cover' && (
                                   <>
-                                    <div className="space-y-0.5">
+                                    <div className="space-y-2">
                                       <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Logo de la Portada</label>
-                                      <div className="space-y-2">
-                                        <input
-                                          type="text"
-                                          value={selectedPage.coverLogo || ''}
-                                          onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
-                                          placeholder="URL del logo o /logo.png"
-                                          className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                        />
+                                      <label className="block w-full border-2 border-dashed border-editorial-red rounded-sm p-3 cursor-pointer hover:bg-red-50 transition-colors text-center">
                                         <input
                                           type="file"
                                           accept="image/jpeg,image/png,image/webp"
@@ -1963,20 +1956,21 @@ export default function App() {
                                               reader.readAsDataURL(e.target.files[0]);
                                             }
                                           }}
-                                          className="w-full text-[9px] px-2 py-1 border border-stone-200 rounded-sm"
+                                          className="hidden"
                                         />
-                                      </div>
+                                        <span className="text-[10px] text-editorial-red font-semibold">📁 Haz clic para subir logo (JPG/PNG)</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={selectedPage.coverLogo || ''}
+                                        onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
+                                        placeholder="O pega URL del logo aquí"
+                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                      />
                                     </div>
-                                    <div className="space-y-0.5">
+                                    <div className="space-y-2">
                                       <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Imagen Secundaria</label>
-                                      <div className="space-y-2">
-                                        <input
-                                          type="text"
-                                          value={selectedPage.coverSecondaryImage || ''}
-                                          onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
-                                          placeholder="URL de imagen secundaria"
-                                          className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                        />
+                                      <label className="block w-full border-2 border-dashed border-stone-300 rounded-sm p-3 cursor-pointer hover:bg-stone-50 transition-colors text-center">
                                         <input
                                           type="file"
                                           accept="image/jpeg,image/png,image/webp"
@@ -1991,9 +1985,17 @@ export default function App() {
                                               reader.readAsDataURL(e.target.files[0]);
                                             }
                                           }}
-                                          className="w-full text-[9px] px-2 py-1 border border-stone-200 rounded-sm"
+                                          className="hidden"
                                         />
-                                      </div>
+                                        <span className="text-[10px] text-stone-500 font-semibold">📁 Haz clic para subir imagen (JPG/PNG)</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={selectedPage.coverSecondaryImage || ''}
+                                        onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
+                                        placeholder="O pega URL de imagen aquí"
+                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                      />
                                     </div>
                                   </>
                                 )}

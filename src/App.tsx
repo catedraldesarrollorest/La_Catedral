@@ -14,6 +14,78 @@ import {
 import { MenuItem, GalleryItem, GeneralInfo, AppState } from './types.js';
 import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './initialData.js';
 
+// === VALIDATION & NORMALIZATION LAYER ===
+const normalizeMenuItem = (item: any): MenuItem => {
+  if (!item || typeof item !== 'object') {
+    throw new Error('Invalid item: not an object');
+  }
+  try {
+    return {
+      id: String(item.id || '').trim() || 'unknown-' + Date.now(),
+      category: item.category as any || 'bebidas',
+      subcategory: String(item.subcategory || '').trim() || 'General',
+      nameEs: String(item.nameEs || '').trim() || '[Sin nombre ES]',
+      nameEn: String(item.nameEn || '').trim() || '[No name EN]',
+      descEs: String(item.descEs || '').trim() || '',
+      descEn: String(item.descEn || '').trim() || '',
+      price: String(item.price || '').trim() || '0 CUP',
+      available: item.available === true || item.available === 1 || false
+    };
+  } catch (e) {
+    console.error('Error normalizing item:', e);
+    throw new Error(`Failed to normalize item: ${(e as any).message}`);
+  }
+};
+
+const validateMenuItem = (item: MenuItem): { valid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  if (!item.id) errors.push('Missing ID');
+  if (!item.category) errors.push('Missing category');
+  if (!item.nameEs) errors.push('Missing Spanish name');
+  if (!item.price) errors.push('Missing price');
+  return { valid: errors.length === 0, errors };
+};
+
+// === ERROR BOUNDARY COMPONENT ===
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('React Error Boundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 bg-red-900 text-white p-8 flex flex-col justify-center items-center z-50">
+          <h1 className="text-4xl font-bold mb-4">⚠️ RENDER ERROR</h1>
+          <p className="text-xl mb-4 text-center max-w-2xl">{this.state.error?.message}</p>
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="bg-white text-red-900 px-6 py-3 font-bold rounded hover:bg-gray-200 transition"
+          >
+            RELOAD PAGE
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export interface MenuPageConfig {
   id: string;
   type: 'cover' | 'menu';
@@ -1382,15 +1454,24 @@ export default function App() {
                                       onClick={() => {
                                         try {
                                           addDebugLog('🔍 Click: ' + item.nameEs);
-                                          addDebugLog('📦 Fields OK: ' + [item.category, item.subcategory, item.nameEs].join('|'));
-                                          addDebugLog('⏳ Calling setEditingItem...');
-                                          setEditingItem(item);
-                                          addDebugLog('✅ setEditingItem done');
+                                          addDebugLog('🔄 Normalizing item...');
+                                          const normalized = normalizeMenuItem(item);
+                                          addDebugLog('✓ Normalized OK');
+
+                                          const validation = validateMenuItem(normalized);
+                                          if (!validation.valid) {
+                                            addDebugLog('⚠️  Validation errors: ' + validation.errors.join(', '));
+                                          }
+
+                                          addDebugLog('⏳ setEditingItem...');
+                                          setEditingItem(normalized);
+                                          addDebugLog('✅ setEditingItem OK');
                                           setIsAddingNew(false);
-                                          addDebugLog('✅ Ready to render form');
+                                          addDebugLog('✅ Ready');
                                         } catch(e) {
-                                          addDebugLog('❌ ERROR: ' + (e as any).message);
-                                          alert('Error: ' + (e as any).message);
+                                          const errMsg = (e as any).message || String(e);
+                                          addDebugLog('❌ ERROR: ' + errMsg);
+                                          alert('Error: ' + errMsg);
                                         }
                                       }}
                                     >
@@ -1405,12 +1486,21 @@ export default function App() {
 
                         </div>
                       ) : editingItem ? (
-                        /* Edit item active subform editor */
+                        /* Edit item active subform editor - with safety checks */
                         <>
                           {(() => {
-                            addDebugLog('📝 Form rendering: ' + editingItem.nameEs);
-                            return null;
+                            try {
+                              if (!editingItem.id || !editingItem.nameEs) {
+                                throw new Error('Invalid editingItem: missing critical fields');
+                              }
+                              addDebugLog('📝 Form render: ' + editingItem.nameEs);
+                              return null;
+                            } catch(e) {
+                              addDebugLog('❌ Form error: ' + (e as any).message);
+                              return null;
+                            }
                           })()}
+                          {editingItem && editingItem.id && editingItem.nameEs ? (
                           <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
 
                           <div className="flex justify-between items-center border-b border-stone-100 pb-4">
@@ -1575,6 +1665,11 @@ export default function App() {
                           </div>
 
                         </form>
+                          ) : (
+                            <div className="p-8 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                              ⚠️ Error: Item data is invalid or corrupt. Please close and try again.
+                            </div>
+                          )}
                           </>
                       ) : null}
 

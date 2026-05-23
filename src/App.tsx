@@ -1340,6 +1340,13 @@ export default function App() {
                             ) : (
                               getFilteredItemsForAdmin().map(item => (
                                 <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50 transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={item.available}
+                                    onChange={() => handleToggleAvailability(item.id)}
+                                    className="w-5 h-5 cursor-pointer shrink-0"
+                                    title={lang === 'es' ? 'Disponible' : 'Available'}
+                                  />
                                   <div className="space-y-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <span className="text-[8px] uppercase tracking-widest font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 border border-stone-200">

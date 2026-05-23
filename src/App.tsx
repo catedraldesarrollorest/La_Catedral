@@ -1940,24 +1940,60 @@ export default function App() {
                                 {selectedPage.type === 'cover' && (
                                   <>
                                     <div className="space-y-0.5">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Logo de la Portada (URL)</label>
-                                      <input
-                                        type="text"
-                                        value={selectedPage.coverLogo || ''}
-                                        onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
-                                        placeholder="URL del logo o /logo.png"
-                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                      />
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Logo de la Portada</label>
+                                      <div className="space-y-2">
+                                        <input
+                                          type="text"
+                                          value={selectedPage.coverLogo || ''}
+                                          onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
+                                          placeholder="URL del logo o /logo.png"
+                                          className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                        />
+                                        <input
+                                          type="file"
+                                          accept="image/jpeg,image/png,image/webp"
+                                          onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              const reader = new FileReader();
+                                              reader.onload = (event) => {
+                                                if (event.target?.result) {
+                                                  updateSelectedPage({ coverLogo: event.target.result as string });
+                                                }
+                                              };
+                                              reader.readAsDataURL(e.target.files[0]);
+                                            }
+                                          }}
+                                          className="w-full text-[9px] px-2 py-1 border border-stone-200 rounded-sm"
+                                        />
+                                      </div>
                                     </div>
                                     <div className="space-y-0.5">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Imagen Secundaria (URL)</label>
-                                      <input
-                                        type="text"
-                                        value={selectedPage.coverSecondaryImage || ''}
-                                        onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
-                                        placeholder="URL de imagen secundaria opcional"
-                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                      />
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Imagen Secundaria</label>
+                                      <div className="space-y-2">
+                                        <input
+                                          type="text"
+                                          value={selectedPage.coverSecondaryImage || ''}
+                                          onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
+                                          placeholder="URL de imagen secundaria"
+                                          className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                        />
+                                        <input
+                                          type="file"
+                                          accept="image/jpeg,image/png,image/webp"
+                                          onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              const reader = new FileReader();
+                                              reader.onload = (event) => {
+                                                if (event.target?.result) {
+                                                  updateSelectedPage({ coverSecondaryImage: event.target.result as string });
+                                                }
+                                              };
+                                              reader.readAsDataURL(e.target.files[0]);
+                                            }
+                                          }}
+                                          className="w-full text-[9px] px-2 py-1 border border-stone-200 rounded-sm"
+                                        />
+                                      </div>
                                     </div>
                                   </>
                                 )}

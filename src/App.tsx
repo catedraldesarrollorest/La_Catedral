@@ -47,6 +47,193 @@ const validateMenuItem = (item: MenuItem): { valid: boolean; errors: string[] } 
 };
 
 // === ERROR BOUNDARY COMPONENT ===
+// === EDIT FORM COMPONENT - BULLETPROOF ===
+interface EditMenuItemFormProps {
+  item: MenuItem;
+  onSave: (item: MenuItem) => void;
+  onCancel: () => void;
+  isNew: boolean;
+  lang: 'es' | 'en';
+}
+
+function EditMenuItemForm({ item, onSave, onCancel, isNew, lang }: EditMenuItemFormProps) {
+  const [localItem, setLocalItem] = React.useState<MenuItem>(item);
+  const [error, setError] = React.useState<string>('');
+
+  // Validate before render
+  if (!localItem?.id || !localItem?.nameEs) {
+    return (
+      <div className="p-8 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+        ❌ Error: Item is invalid. {!localItem?.id ? 'Missing ID.' : ''} {!localItem?.nameEs ? 'Missing name.' : ''}
+      </div>
+    );
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Validate before save
+      if (!localItem.id) throw new Error('ID is required');
+      if (!localItem.nameEs) throw new Error('Spanish name is required');
+      if (!localItem.category) throw new Error('Category is required');
+
+      onSave(localItem);
+    } catch (err) {
+      setError((err as any).message);
+    }
+  };
+
+  return (
+    <>
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          ❌ {error}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
+        <div className="flex justify-between items-center border-b border-stone-100 pb-4">
+          <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
+            {isNew ? (lang === 'es' ? 'NUEVO ELEMENTO' : 'ADD ITEM') : (lang === 'es' ? 'EDITAR ELEMENTO' : 'EDIT ITEM')}
+          </h3>
+          <button type="button" onClick={onCancel} className="text-stone-400 hover:text-stone-700 text-[10px] uppercase font-bold">
+            {lang === 'es' ? 'Cancelar' : 'Cancel'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Category */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Categoría' : 'Category'}
+            </label>
+            <select
+              value={localItem.category}
+              onChange={(e) => setLocalItem({ ...localItem, category: e.target.value as any })}
+              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
+            >
+              <option value="bebidas">Bebidas</option>
+              <option value="primeros">Primeros</option>
+              <option value="principales">Principales</option>
+              <option value="postres">Postres</option>
+              <option value="espirituosos">Espirituosos</option>
+            </select>
+          </div>
+
+          {/* Subcategory */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Subcategoría' : 'Subcategory'}
+            </label>
+            <input
+              type="text"
+              value={localItem.subcategory}
+              onChange={(e) => setLocalItem({ ...localItem, subcategory: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-editorial-red"
+            />
+          </div>
+
+          {/* Name ES */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Nombre (Español)' : 'Name (Spanish)'}
+            </label>
+            <input
+              type="text"
+              value={localItem.nameEs}
+              onChange={(e) => setLocalItem({ ...localItem, nameEs: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
+              required
+            />
+          </div>
+
+          {/* Name EN */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Nombre (Inglés)' : 'Name (English)'}
+            </label>
+            <input
+              type="text"
+              value={localItem.nameEn}
+              onChange={(e) => setLocalItem({ ...localItem, nameEn: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
+            />
+          </div>
+
+          {/* Description ES */}
+          <div className="space-y-1 sm:col-span-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Descripción (Español)' : 'Description (Spanish)'}
+            </label>
+            <textarea
+              rows={2}
+              value={localItem.descEs}
+              onChange={(e) => setLocalItem({ ...localItem, descEs: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
+            />
+          </div>
+
+          {/* Description EN */}
+          <div className="space-y-1 sm:col-span-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Descripción (Inglés)' : 'Description (English)'}
+            </label>
+            <textarea
+              rows={2}
+              value={localItem.descEn}
+              onChange={(e) => setLocalItem({ ...localItem, descEn: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
+            />
+          </div>
+
+          {/* Price */}
+          <div className="space-y-1 sm:col-span-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
+              {lang === 'es' ? 'Precio' : 'Price'}
+            </label>
+            <input
+              type="text"
+              value={localItem.price}
+              onChange={(e) => setLocalItem({ ...localItem, price: e.target.value })}
+              className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
+              required
+            />
+          </div>
+
+          {/* Availability */}
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <input
+              type="checkbox"
+              id="available_check"
+              checked={localItem.available}
+              onChange={(e) => setLocalItem({ ...localItem, available: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="available_check" className="text-xs uppercase font-semibold text-stone-700 cursor-pointer">
+              {lang === 'es' ? 'Disponible' : 'Available'}
+            </label>
+          </div>
+        </div>
+
+        <div className="pt-4 flex gap-4">
+          <button
+            type="submit"
+            className="flex-1 bg-editorial-dark hover:bg-editorial-red text-white py-3 text-xs uppercase tracking-widest font-semibold"
+          >
+            {isNew ? (lang === 'es' ? 'Crear' : 'Create') : (lang === 'es' ? 'Guardar' : 'Save')}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="border border-stone-300 py-3 px-6 text-xs uppercase tracking-widest hover:bg-stone-50"
+          >
+            {lang === 'es' ? 'Cancelar' : 'Cancel'}
+          </button>
+        </div>
+      </form>
+    </>
+  );
+}
+
 export class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
@@ -1486,191 +1673,20 @@ export default function App() {
 
                         </div>
                       ) : editingItem ? (
-                        /* Edit item active subform editor - with safety checks */
-                        <>
-                          {(() => {
-                            try {
-                              if (!editingItem.id || !editingItem.nameEs) {
-                                throw new Error('Invalid editingItem: missing critical fields');
-                              }
-                              addDebugLog('📝 Form render: ' + editingItem.nameEs);
-                              return null;
-                            } catch(e) {
-                              addDebugLog('❌ Form error: ' + (e as any).message);
-                              return null;
-                            }
-                          })()}
-                          {editingItem && editingItem.id && editingItem.nameEs ? (
-                          <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
-
-                          <div className="flex justify-between items-center border-b border-stone-100 pb-4">
-                            <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
-                              {isAddingNew ? (lang === 'es' ? 'NUEVO ELEMENTO DE LA CARTA' : 'ADD NEW MENU ITEM') : (lang === 'es' ? 'MODIFICAR ELEMENTO DE LA CARTA' : 'EDIT MENU ITEM')}
-                            </h3>
-                            <button 
-                              type="button" 
-                              onClick={() => {
-                                setEditingItem(null);
-                                setIsAddingNew(false);
-                              }}
-                              className="text-stone-400 hover:text-stone-700 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider"
-                            >
-                              <ArrowLeft className="w-3.5 h-3.5" />
-                              <span>{lang === 'es' ? 'Cancelar / Volver' : 'Back'}</span>
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            
-                            {/* Category Selector */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Categoría General
-                              </label>
-                              <select 
-                                value={editingItem.category}
-                                onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value as any })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
-                              >
-                                <option value="bebidas">Bebidas (Drinks)</option>
-                                <option value="primeros">Primeros / Entradas / Pastas</option>
-                                <option value="principales">Platos Principales (Mains)</option>
-                                <option value="postres">Postres (Desserts)</option>
-                                <option value="espirituosos">Espirituosos (Spirits / Vinos)</option>
-                              </select>
-                            </div>
-
-                            {/* Subcategory Label editable */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Subcategoría del menú
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="Ej: Sin Alcohol, Carnes, Tradicionales Cubanos"
-                                value={editingItem.subcategory}
-                                onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-editorial-red"
-                                required
-                              />
-                            </div>
-
-                            {/* Spanish Product Name */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Nombre Oficial (Español)
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="..."
-                                value={editingItem.nameEs}
-                                onChange={(e) => setEditingItem({ ...editingItem, nameEs: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold"
-                                required
-                              />
-                            </div>
-
-                            {/* English Product Name */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Nombre Traducido (Inglés)
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="Ej: Fresh Strawberry Lemonade..."
-                                value={editingItem.nameEn}
-                                onChange={(e) => setEditingItem({ ...editingItem, nameEn: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif"
-                              />
-                            </div>
-
-                            {/* Price selector */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Precio de venta visible (CUP / USD / EUR)
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="Ej. 1200 CUP o 5.00 USD"
-                                value={editingItem.price}
-                                onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
-                                required
-                              />
-                            </div>
-
-                            {/* Spanish Description */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Descripción en Español
-                              </label>
-                              <textarea 
-                                rows={2}
-                                placeholder="Ingredientes, modo de preparación..."
-                                value={editingItem.descEs}
-                                onChange={(e) => setEditingItem({ ...editingItem, descEs: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-                              />
-                            </div>
-
-                            {/* English Description */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Descripción en Inglés
-                              </label>
-                              <textarea 
-                                rows={2}
-                                placeholder="..."
-                                value={editingItem.descEn}
-                                onChange={(e) => setEditingItem({ ...editingItem, descEn: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-                              />
-                            </div>
-
-                            {/* Availability switch checkbox */}
-                            <div className="flex items-center gap-2 sm:col-span-2 pt-2">
-                              <input 
-                                type="checkbox"
-                                id="item_available_check"
-                                checked={editingItem.available}
-                                onChange={(e) => setEditingItem({ ...editingItem, available: e.target.checked })}
-                                className="w-4 h-4 text-editorial-red accent-editorial-red"
-                              />
-                              <label htmlFor="item_available_check" className="text-xs uppercase tracking-wider font-semibold text-stone-700 cursor-pointer">
-                                {lang === 'es' ? 'Plato disponible en almacén para la venta' : 'Item is available/in stock for clients'}
-                              </label>
-                            </div>
-
-                          </div>
-
-                          <div className="pt-4 flex gap-4">
-                            <button 
-                              type="submit"
-                              className="flex-1 bg-[#1A1A1A] hover:bg-editorial-red text-white py-3 text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
-                            >
-                              <Save className="w-4 h-4" />
-                              <span>{isAddingNew ? (lang === 'es' ? 'Añadir plato a la carta' : 'Publish to menu') : (lang === 'es' ? 'Guardar Cambios' : 'Save alterations')}</span>
-                            </button>
-                            
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                setEditingItem(null);
-                                setIsAddingNew(false);
-                              }}
-                              className="border border-stone-300 py-3 px-6 text-xs uppercase tracking-widest hover:bg-stone-50 transition-colors"
-                            >
-                              {lang === 'es' ? 'Volver' : 'Back'}
-                            </button>
-                          </div>
-
-                        </form>
-                          ) : (
-                            <div className="p-8 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                              ⚠️ Error: Item data is invalid or corrupt. Please close and try again.
-                            </div>
-                          )}
-                          </>
+                        <EditMenuItemForm
+                          item={editingItem}
+                          onSave={(item) => {
+                            addDebugLog('💾 Saving: ' + item.nameEs);
+                            setEditingItem(item);
+                            handleSaveMenuItem({ preventDefault: () => {} } as any);
+                          }}
+                          onCancel={() => {
+                            setEditingItem(null);
+                            setIsAddingNew(false);
+                          }}
+                          isNew={isAddingNew}
+                          lang={lang}
+                        />
                       ) : null}
 
                     </div>

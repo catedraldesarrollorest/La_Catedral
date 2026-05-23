@@ -95,8 +95,8 @@ async function startServer() {
     }
   };
 
-  // API Route: Get complete state
-  app.get('/api/state', async (req, res) => {
+  // API Route: Get complete state (supports both /api/state and /api/sync)
+  const handleGetState = async (req: any, res: any) => {
     try {
       const state = await fetchStateFromSupabase();
       res.json(state);
@@ -104,10 +104,13 @@ async function startServer() {
       console.error('Error fetching state:', err);
       res.status(500).json({ error: 'Error al cargar el estado del servidor.' });
     }
-  });
+  };
 
-  // API Route: Update state
-  app.post('/api/state', async (req, res) => {
+  app.get('/api/state', handleGetState);
+  app.get('/api/sync', handleGetState);
+
+  // API Route: Update state (supports both /api/state and /api/sync)
+  const handlePostState = async (req: any, res: any) => {
     try {
       const newState = req.body;
       if (!newState) {
@@ -118,7 +121,9 @@ async function startServer() {
         return res.status(500).json({ error: 'Supabase not configured' });
       }
 
-      // Save menu items
+      // Save menu items - delete all first, then insert new ones
+      await supabase.from('menu_items').delete().neq('id', '');
+
       if (newState.menuItems && newState.menuItems.length > 0) {
         const menuData = newState.menuItems.map((item: any) => ({
           id: item.id,
@@ -132,7 +137,7 @@ async function startServer() {
           available: item.available
         }));
 
-        await supabase.from('menu_items').upsert(menuData);
+        await supabase.from('menu_items').insert(menuData);
       }
 
       // Save gallery items
@@ -172,7 +177,10 @@ async function startServer() {
       console.error('Failed to save state:', err);
       res.status(500).json({ error: 'Hubo un error al guardar los cambios en el servidor.' });
     }
-  });
+  };
+
+  app.post('/api/state', handlePostState);
+  app.post('/api/sync', handlePostState);
 
   // API Route: Reset to defaults
   app.post('/api/state/reset', async (req, res) => {

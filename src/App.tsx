@@ -2040,91 +2040,93 @@ export default function App() {
                                 )}
                               </div>
 
-                              {/* Background Options */}
-                              <div className="space-y-2">
-                                <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Fondo de la Página</label>
-                                
-                                {/* Direct URL Input */}
-                                <input
-                                  type="text"
-                                  value={selectedPage.backgroundImage}
-                                  onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
-                                  placeholder="URL personalizada de fondo..."
-                                  className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                />
+                              {/* Background Options - Only for Cover Pages */}
+                              {selectedPage.type === 'cover' && (
+                                <div className="space-y-2">
+                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Fondo de la Página</label>
 
-                                {/* Gallery Quick Selector Carousel */}
-                                {state && state.galleryItems.length > 0 && (
-                                  <div className="space-y-1">
-                                    <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Tus Fotos Subidas:</span>
-                                    <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-[310px] scrollbar-thin">
-                                      {state.galleryItems.map(item => (
+                                  {/* Direct URL Input */}
+                                  <input
+                                    type="text"
+                                    value={selectedPage.backgroundImage}
+                                    onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
+                                    placeholder="URL personalizada de fondo..."
+                                    className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
+                                  />
+
+                                  {/* Gallery Quick Selector Carousel */}
+                                  {state && state.galleryItems.length > 0 && (
+                                    <div className="space-y-1">
+                                      <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Tus Fotos Subidas:</span>
+                                      <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-[310px] scrollbar-thin">
+                                        {state.galleryItems.map(item => (
+                                          <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => updateSelectedPage({ backgroundImage: item.imageSrc })}
+                                            className={`w-12 h-9 shrink-0 relative overflow-hidden rounded-sm border transition-all cursor-pointer ${
+                                              selectedPage.backgroundImage === item.imageSrc ? 'border-editorial-red scale-90 ring-1 ring-editorial-red' : 'border-stone-300 hover:border-stone-450'
+                                            }`}
+                                          >
+                                            <img src={item.imageSrc} className="w-full h-full object-cover" />
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Stock Classy Background presets */}
+                                  <div className="space-y-1 pt-1">
+                                    <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Fondos de Catálogo:</span>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {[
+                                        { name: 'Portada Bodega', url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop' },
+                                        { name: 'Copas Vino', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop' },
+                                        { name: 'Copa Cockt.', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop' },
+                                        { name: 'Mármol Blanco', url: 'https://images.unsplash.com/photo-1533038590840-1cde6b66b706?q=80&w=1200&auto=format&fit=crop' },
+                                        { name: 'Páginas Claras', url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1200&auto=format&fit=crop' }
+                                      ].map(b => (
                                         <button
-                                          key={item.id}
+                                          key={b.name}
                                           type="button"
-                                          onClick={() => updateSelectedPage({ backgroundImage: item.imageSrc })}
-                                          className={`w-12 h-9 shrink-0 relative overflow-hidden rounded-sm border transition-all cursor-pointer ${
-                                            selectedPage.backgroundImage === item.imageSrc ? 'border-editorial-red scale-90 ring-1 ring-editorial-red' : 'border-stone-300 hover:border-stone-450'
-                                          }`}
+                                          onClick={() => updateSelectedPage({ backgroundImage: b.url })}
+                                          className="text-[8px] uppercase tracking-wider font-semibold py-1 px-1.5 border border-stone-200 text-stone-600 bg-stone-50 hover:bg-stone-100 rounded-sm hover:border-stone-300 cursor-pointer"
                                         >
-                                          <img src={item.imageSrc} className="w-full h-full object-cover" />
+                                          {b.name}
                                         </button>
                                       ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Stock Classy Background presets */}
-                                <div className="space-y-1 pt-1">
-                                  <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Fondos de Catálogo:</span>
-                                  <div className="grid grid-cols-2 gap-1">
-                                    {[
-                                      { name: 'Portada Bodega', url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop' },
-                                      { name: 'Copas Vino', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop' },
-                                      { name: 'Copa Cockt.', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop' },
-                                      { name: 'Mármol Blanco', url: 'https://images.unsplash.com/photo-1533038590840-1cde6b66b706?q=80&w=1200&auto=format&fit=crop' },
-                                      { name: 'Páginas Claras', url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1200&auto=format&fit=crop' }
-                                    ].map(b => (
                                       <button
-                                        key={b.name}
                                         type="button"
-                                        onClick={() => updateSelectedPage({ backgroundImage: b.url })}
-                                        className="text-[8px] uppercase tracking-wider font-semibold py-1 px-1.5 border border-stone-200 text-stone-600 bg-stone-50 hover:bg-stone-100 rounded-sm hover:border-stone-300 cursor-pointer"
+                                        onClick={() => updateSelectedPage({ backgroundImage: '' })}
+                                        className="text-[8px] col-span-2 uppercase tracking-wider font-semibold py-1 px-1.5 border border-dashed border-stone-300 text-stone-500 bg-white hover:bg-stone-50 rounded-sm text-center cursor-pointer"
                                       >
-                                        {b.name}
+                                        ❌ Sin fondo (Blanco Puro)
                                       </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => updateSelectedPage({ backgroundImage: '' })}
-                                      className="text-[8px] col-span-2 uppercase tracking-wider font-semibold py-1 px-1.5 border border-dashed border-stone-300 text-stone-500 bg-white hover:bg-stone-50 rounded-sm text-center cursor-pointer"
-                                    >
-                                      ❌ Sin fondo (Blanco Puro)
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Opacity slider */}
-                                {selectedPage.backgroundImage && (
-                                  <div className="space-y-0.5 pt-1">
-                                    <div className="flex justify-between text-[8px] uppercase tracking-wider font-bold text-stone-400">
-                                      <span>Opacidad de Imagen</span>
-                                      <span>{selectedPage.bgOpacity}%</span>
                                     </div>
-                                    <input 
-                                      type="range"
-                                      min="0"
-                                      max="100"
-                                      value={selectedPage.bgOpacity}
-                                      onChange={e => updateSelectedPage({ bgOpacity: parseInt(e.target.value) })}
-                                      className="w-full accent-editorial-red h-1 bg-stone-200 rounded-sm appearance-none cursor-pointer"
-                                    />
-                                    <p className="text-[7.5px] text-stone-400 leading-none mt-1">
-                                      * Ajuste a un nivel bajo (12% - 15%) en menús de platos para asegurar que la tipografía de precios sea totalmente legible.
-                                    </p>
                                   </div>
-                                )}
-                              </div>
+
+                                  {/* Opacity slider */}
+                                  {selectedPage.backgroundImage && (
+                                    <div className="space-y-0.5 pt-1">
+                                      <div className="flex justify-between text-[8px] uppercase tracking-wider font-bold text-stone-400">
+                                        <span>Opacidad de Imagen</span>
+                                        <span>{selectedPage.bgOpacity}%</span>
+                                      </div>
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={selectedPage.bgOpacity}
+                                        onChange={e => updateSelectedPage({ bgOpacity: parseInt(e.target.value) })}
+                                        className="w-full accent-editorial-red h-1 bg-stone-200 rounded-sm appearance-none cursor-pointer"
+                                      />
+                                      <p className="text-[7.5px] text-stone-400 leading-none mt-1">
+                                        * Ajuste a un nivel bajo (12% - 15%) en menús de platos para asegurar que la tipografía de precios sea totalmente legible.
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Menu Settings Category selection (Only on Menu Page) */}
                               {selectedPage.type === 'menu' && (

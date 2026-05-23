@@ -1363,10 +1363,25 @@ export default function App() {
                                       className="flex-1 cursor-pointer"
                                       onClick={() => {
                                         try {
+                                          console.log('🔍 Clicking item:', item.nameEs, 'ID:', item.id);
+                                          console.log('📦 Item data:', {
+                                            category: item.category,
+                                            subcategory: item.subcategory,
+                                            nameEs: item.nameEs,
+                                            nameEn: item.nameEn,
+                                            descEs: item.descEs,
+                                            descEn: item.descEn,
+                                            price: item.price,
+                                            available: item.available
+                                          });
+                                          console.log('✅ About to call setEditingItem');
                                           setEditingItem(item);
+                                          console.log('✅ setEditingItem called');
                                           setIsAddingNew(false);
+                                          console.log('✅ setIsAddingNew(false) called');
                                         } catch(e) {
-                                          console.error('Error setting editing item:', e);
+                                          console.error('❌ Error setting editing item:', e);
+                                          alert('Error: ' + (e as any).message);
                                         }
                                       }}
                                     >
@@ -1382,8 +1397,13 @@ export default function App() {
                         </div>
                       ) : editingItem ? (
                         /* Edit item active subform editor */
-                        <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
-                          
+                        <>
+                          {(() => {
+                            console.log('📝 Rendering form for item:', editingItem.nameEs);
+                            return null;
+                          })()}
+                          <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
+
                           <div className="flex justify-between items-center border-b border-stone-100 pb-4">
                             <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
                               {isAddingNew ? (lang === 'es' ? 'NUEVO ELEMENTO DE LA CARTA' : 'ADD NEW MENU ITEM') : (lang === 'es' ? 'MODIFICAR ELEMENTO DE LA CARTA' : 'EDIT MENU ITEM')}
@@ -1546,6 +1566,7 @@ export default function App() {
                           </div>
 
                         </form>
+                          </>
                       ) : null}
 
                     </div>

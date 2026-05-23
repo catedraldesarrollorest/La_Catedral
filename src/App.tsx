@@ -2461,7 +2461,7 @@ export default function App() {
                                       </div>
                                     ) : (
                                       selectedPage.categories.map(cat => {
-                                        const items = state?.menuItems.filter(item => item.category === cat && item.available) || [];
+                                        const items = state?.menuItems.filter(item => item.category === cat) || [];
                                         if (items.length === 0) return null;
 
                                         return (
@@ -2485,11 +2485,18 @@ export default function App() {
                                                 };
 
                                                 return (
-                                                  <div key={item.id} className="space-y-0.5 animate-fade-in">
+                                                  <div key={item.id} className={`space-y-0.5 animate-fade-in ${!item.available ? 'opacity-50' : ''}`}>
                                                     <div className="flex justify-between items-baseline gap-1">
-                                                      <span className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
-                                                        {lang === 'es' ? item.nameEs : item.nameEn}
-                                                      </span>
+                                                      <div className="flex items-center gap-0.5">
+                                                        <span className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
+                                                          {lang === 'es' ? item.nameEs : item.nameEn}
+                                                        </span>
+                                                        {!item.available && (
+                                                          <span className="text-[6px] font-bold text-red-600 uppercase tracking-wider">
+                                                            {lang === 'es' ? 'AGOTADO' : 'OUT'}
+                                                          </span>
+                                                        )}
+                                                      </div>
                                                       <div className="flex-1 border-b border-dotted border-stone-200 mx-1"></div>
                                                       <span className={`font-mono font-bold text-stone-800 shrink-0 ${textClass.price}`}>
                                                         {item.price}
@@ -2694,7 +2701,7 @@ export default function App() {
                       </div>
                     ) : (
                       page.categories.map(cat => {
-                        const items = state?.menuItems.filter(item => item.category === cat && item.available) || [];
+                        const items = state?.menuItems.filter(item => item.category === cat) || [];
                         if (items.length === 0) return null;
 
                         return (
@@ -2718,11 +2725,18 @@ export default function App() {
                                 };
 
                                 return (
-                                  <div key={item.id} className="space-y-0.5 break-inside-avoid">
+                                  <div key={item.id} className={`space-y-0.5 break-inside-avoid ${!item.available ? 'opacity-50' : ''}`}>
                                     <div className="flex justify-between items-baseline gap-1">
-                                      <h4 className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
-                                        {lang === 'es' ? item.nameEs : item.nameEn}
-                                      </h4>
+                                      <div className="flex items-center gap-0.5">
+                                        <h4 className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
+                                          {lang === 'es' ? item.nameEs : item.nameEn}
+                                        </h4>
+                                        {!item.available && (
+                                          <span className="text-[7px] font-bold text-red-600 uppercase tracking-wider">
+                                            {lang === 'es' ? 'AGOTADO' : 'OUT'}
+                                          </span>
+                                        )}
+                                      </div>
                                       <div className="flex-1 border-b border-dotted border-stone-300 mx-1"></div>
                                       <span className={`font-mono font-bold text-stone-800 shrink-0 ${textClass.price}`}>
                                         {item.price}

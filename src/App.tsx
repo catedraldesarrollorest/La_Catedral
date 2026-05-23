@@ -113,6 +113,7 @@ export default function App() {
   ]);
   const [selectedPdfPageId, setSelectedPdfPageId] = useState<string>('page-1');
   const selectedPage = pdfPages.find(p => p.id === selectedPdfPageId) || pdfPages[0];
+  const selectedPageIndex = pdfPages.findIndex(p => p.id === selectedPdfPageId);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [toastMessage, setToastMessage] = useState<string>('');
 

@@ -117,6 +117,30 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [toastMessage, setToastMessage] = useState<string>('');
 
+  // Load PDF pages configuration from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('pdfPagesConfig');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPdfPages(parsed);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading PDF config from localStorage:', err);
+    }
+  }, []);
+
+  // Save PDF pages configuration to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('pdfPagesConfig', JSON.stringify(pdfPages));
+    } catch (err) {
+      console.error('Error saving PDF config to localStorage:', err);
+    }
+  }, [pdfPages]);
+
   // Menu management inside Admin
   const [menuFilter, setMenuFilter] = useState<string>('');
   const [menuEditCategory, setMenuEditCategory] = useState<'all' | 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>('all');

@@ -1245,9 +1245,9 @@ export default function App() {
                 <div className="flex-1 overflow-y-auto bg-editorial-cream">
 
                   {/* SUB PANEL A: MENU ITEMS LIST OR EDIT/FORM */}
-                  {adminCategory === 'menu' && (
+                  {adminCategory === 'menu' && state && (
                     <div className="p-4 sm:p-8 space-y-6">
-                      
+
                       {!editingItem ? (
                         /* Default screen of A: List of items + filters */
                         <div className="space-y-6">

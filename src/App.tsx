@@ -1351,7 +1351,7 @@ export default function App() {
                                   <input
                                     type="checkbox"
                                     checked={item.available}
-                                    onChange={() => handleToggleAvailability(item.id)}
+                                    onChange={() => { /* disabled for debugging */ }}
                                     className="w-5 h-5 cursor-pointer shrink-0"
                                     title={lang === 'es' ? 'Disponible' : 'Available'}
                                   />
@@ -1403,16 +1403,16 @@ export default function App() {
 
                                     {/* Action items */}
                                     <div className="flex gap-1.5">
-                                      <button 
-                                        onClick={() => setEditingItem(item)}
+                                      <button
+                                        onClick={() => { /* disabled for debugging */ }}
                                         className="p-2 border border-stone-200 bg-white hover:border-editorial-dark hover:text-editorial-dark text-stone-500 transition-colors cursor-pointer"
                                         title={lang === 'es' ? 'Editar' : 'Edit'}
                                       >
                                         <Edit className="w-3.5 h-3.5" />
                                       </button>
                                       
-                                      <button 
-                                        onClick={() => handleDeleteMenuItem(item.id, item.nameEs)}
+                                      <button
+                                        onClick={() => { /* disabled for debugging */ }}
                                         className="p-2 border border-stone-200 bg-white hover:border-editorial-red hover:text-editorial-red text-stone-500 transition-colors cursor-pointer"
                                         title={lang === 'es' ? 'Eliminar' : 'Delete'}
                                       >

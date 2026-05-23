@@ -22,7 +22,11 @@ export interface MenuPageConfig {
   coverSubtitle: string;
   backgroundImage: string;
   coverLogo?: string;
+  coverLogoSize?: number;
+  coverSecondaryText?: string;
   coverSecondaryImage?: string;
+  showCoverTitle?: boolean;
+  showCoverSubtitle?: boolean;
   bgOpacity: number;
   categories: Array<'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>;
   columns: 1 | 2;
@@ -59,8 +63,12 @@ export default function App() {
       coverSubtitle: 'RESTAURANTE & BAR',
       backgroundImage: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop',
       coverLogo: '/logo.png',
+      coverLogoSize: 80,
+      coverSecondaryText: 'RESTAURANTE & BAR',
       coverSecondaryImage: '',
-      bgOpacity: 55,
+      showCoverTitle: false,
+      showCoverSubtitle: false,
+      bgOpacity: 0,
       categories: [],
       columns: 1,
       fontSize: 'base',
@@ -1938,9 +1946,10 @@ export default function App() {
                                   />
                                 </div>
                                 {selectedPage.type === 'cover' && (
-                                  <>
+                                  <div className="space-y-3 border-t border-stone-200 pt-3">
+                                    {/* Logo Upload & Size */}
                                     <div className="space-y-2">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Logo de la Portada</label>
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Logo</label>
                                       <label className="block w-full border-2 border-dashed border-editorial-red rounded-sm p-3 cursor-pointer hover:bg-red-50 transition-colors text-center">
                                         <input
                                           type="file"
@@ -1958,18 +1967,37 @@ export default function App() {
                                           }}
                                           className="hidden"
                                         />
-                                        <span className="text-[10px] text-editorial-red font-semibold">📁 Haz clic para subir logo (JPG/PNG)</span>
+                                        <span className="text-[10px] text-editorial-red font-semibold">📁 Subir Logo</span>
                                       </label>
+                                      <div className="flex items-center gap-2">
+                                        <label className="text-[9px] text-stone-500 w-16">Tamaño:</label>
+                                        <input
+                                          type="range"
+                                          min="20"
+                                          max="200"
+                                          value={selectedPage.coverLogoSize || 80}
+                                          onChange={e => updateSelectedPage({ coverLogoSize: parseInt(e.target.value) })}
+                                          className="flex-1"
+                                        />
+                                        <span className="text-[9px] text-stone-500 w-8">{selectedPage.coverLogoSize || 80}px</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Secondary Text */}
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Texto Secundario</label>
                                       <input
                                         type="text"
-                                        value={selectedPage.coverLogo || ''}
-                                        onChange={e => updateSelectedPage({ coverLogo: e.target.value })}
-                                        placeholder="O pega URL del logo aquí"
+                                        value={selectedPage.coverSecondaryText || ''}
+                                        onChange={e => updateSelectedPage({ coverSecondaryText: e.target.value })}
+                                        placeholder="Ej: RESTAURANTE & BAR"
                                         className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
                                       />
                                     </div>
+
+                                    {/* Secondary Image */}
                                     <div className="space-y-2">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Imagen Secundaria</label>
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Imagen Secundaria (Opcional)</label>
                                       <label className="block w-full border-2 border-dashed border-stone-300 rounded-sm p-3 cursor-pointer hover:bg-stone-50 transition-colors text-center">
                                         <input
                                           type="file"
@@ -1987,17 +2015,28 @@ export default function App() {
                                           }}
                                           className="hidden"
                                         />
-                                        <span className="text-[10px] text-stone-500 font-semibold">📁 Haz clic para subir imagen (JPG/PNG)</span>
+                                        <span className="text-[10px] text-stone-500 font-semibold">📁 Subir Imagen</span>
                                       </label>
+                                    </div>
+
+                                    {/* Background Color/Image */}
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Color de Fondo</label>
+                                      <input
+                                        type="color"
+                                        value="#FFFFFF"
+                                        onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
+                                        className="w-full h-8 rounded-sm cursor-pointer"
+                                      />
                                       <input
                                         type="text"
-                                        value={selectedPage.coverSecondaryImage || ''}
-                                        onChange={e => updateSelectedPage({ coverSecondaryImage: e.target.value })}
-                                        placeholder="O pega URL de imagen aquí"
+                                        value={selectedPage.backgroundImage}
+                                        onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
+                                        placeholder="O pega URL de imagen..."
                                         className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
                                       />
                                     </div>
-                                  </>
+                                  </div>
                                 )}
                               </div>
 
@@ -2215,13 +2254,29 @@ export default function App() {
 
                         {/* High fidelity interactive printed page render wrapper */}
                         {selectedPage ? (
-                          <div className="w-[100%] max-w-[480px] aspect-[210/297] bg-white text-stone-900 relative shadow-2xl overflow-hidden flex flex-col justify-between p-[8%] animate-fade-in border border-white">
-                            
-                            {/* Overlay background */}
-                            {selectedPage.backgroundImage && (
-                              <div 
+                          <div
+                            className="w-[100%] max-w-[480px] aspect-[210/297] text-stone-900 relative shadow-2xl overflow-hidden flex flex-col justify-between p-[8%] animate-fade-in border border-white"
+                            style={{
+                              backgroundColor:
+                                selectedPage.type === 'cover'
+                                  ? selectedPage.backgroundColor || '#ffffff'
+                                  : '#ffffff',
+                              backgroundImage:
+                                selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0
+                                  ? `url(${selectedPage.backgroundImage})`
+                                  : 'none',
+                              backgroundPosition: 'center',
+                              backgroundSize: 'cover',
+                              backgroundRepeat: 'no-repeat',
+                              backgroundAttachment: 'fixed'
+                            }}
+                          >
+
+                            {/* Overlay background for menu pages */}
+                            {selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && selectedPage.type !== 'cover' && (
+                              <div
                                 className="absolute inset-0 pointer-events-none z-0"
-                                style={{ 
+                                style={{
                                   backgroundImage: `url(${selectedPage.backgroundImage})`,
                                   backgroundPosition: 'center',
                                   backgroundSize: 'cover',
@@ -2233,28 +2288,38 @@ export default function App() {
 
                             {/* Render Cover inside Live Preview */}
                             {selectedPage.type === 'cover' ? (
-                              <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-double border-stone-800">
+                              <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-4">
                                 {selectedPage.coverSecondaryImage && (
-                                  <img src={selectedPage.coverSecondaryImage} alt="Secondary" className="h-20 w-auto object-contain mb-4 opacity-80" />
+                                  <img src={selectedPage.coverSecondaryImage} alt="Secondary" className="mb-4 object-contain opacity-90" style={{ maxHeight: '80px' }} />
                                 )}
 
-                                {selectedPage.coverLogo ? (
-                                  <img src={selectedPage.coverLogo} alt="Logo" className="h-12 w-auto object-contain mb-2" />
-                                ) : (
-                                  <div className="text-xl font-cinzel text-editorial-red mb-1">✛</div>
+                                {selectedPage.coverLogo && (
+                                  <img
+                                    src={selectedPage.coverLogo}
+                                    alt="Logo"
+                                    className="w-auto object-contain mb-6"
+                                    style={{ height: `${selectedPage.coverLogoSize || 80}px` }}
+                                  />
                                 )}
 
-                                <h3 className="font-cinzel text-2xl sm:text-3xl font-extrabold tracking-[0.2em] text-stone-900 uppercase">
-                                  {selectedPage.coverTitle || 'LA CATEDRAL'}
-                                </h3>
-                                <div className="w-16 h-[1px] bg-stone-400 my-4"></div>
-                                <h4 className="font-sans text-[8px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
-                                  {selectedPage.coverSubtitle || 'RESTAURANTE & BAR'}
-                                </h4>
+                                {selectedPage.showCoverTitle && (
+                                  <>
+                                    <h3 className="font-cinzel text-2xl sm:text-3xl font-extrabold tracking-[0.2em] text-stone-900 uppercase">
+                                      {selectedPage.coverTitle || 'LA CATEDRAL'}
+                                    </h3>
+                                    <div className="w-16 h-[1px] bg-stone-400 my-4"></div>
+                                  </>
+                                )}
 
-                                <div className="absolute bottom-4 text-[7px] uppercase tracking-widest text-stone-400 font-serif">
-                                  La Habana, Cuba
-                                </div>
+                                {selectedPage.showCoverSubtitle ? (
+                                  <h4 className="font-sans text-[10px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
+                                    {selectedPage.coverSubtitle || 'RESTAURANTE & BAR'}
+                                  </h4>
+                                ) : selectedPage.coverSecondaryText ? (
+                                  <h4 className="font-sans text-[10px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
+                                    {selectedPage.coverSecondaryText}
+                                  </h4>
+                                ) : null}
                               </div>
                             ) : (
                               /* Render Menu list inside Live Preview */

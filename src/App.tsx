@@ -713,14 +713,6 @@ export default function App() {
                         <span className="text-[10px] uppercase tracking-widest">Atmósfera Catedral</span>
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/80 to-transparent p-6 text-white flex flex-col justify-end">
-                      <span className="text-[9px] uppercase tracking-[0.3em] font-semibold opacity-80 mb-1">
-                        {lang === 'es' ? 'Reservar mesa' : 'Book a table'}
-                      </span>
-                      <p className="font-cinzel text-md tracking-wider">
-                        {state?.generalInfo.phone}
-                      </p>
-                    </div>
                   </div>
                 </div>
                 {/* Visual backframe matching the editorial guidelines */}

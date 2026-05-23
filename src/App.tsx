@@ -136,6 +136,7 @@ export default function App() {
     }
   ]);
   const [selectedPdfPageId, setSelectedPdfPageId] = useState<string>('page-1');
+  const [pagesToPrint, setPagesToPrint] = useState<Set<string>>(new Set(pdfPages.map(p => p.id)));
   const selectedPage = pdfPages.find(p => p.id === selectedPdfPageId) || pdfPages[0];
   const selectedPageIndex = pdfPages.findIndex(p => p.id === selectedPdfPageId);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -1877,13 +1878,29 @@ export default function App() {
                           <div className="space-y-2">
                             <div className="flex justify-between items-baseline">
                               <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">Páginas del Documento</label>
-                              <button
-                                type="button"
-                                onClick={addPage}
-                                className="text-[9px] uppercase tracking-widest font-bold text-editorial-red hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none"
-                              >
-                                <Plus className="w-3 h-3" /> Añadir Página
-                              </button>
+                              <div className="flex gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setPagesToPrint(new Set(pdfPages.map(p => p.id)))}
+                                  className="text-[8px] uppercase tracking-widest font-bold text-editorial-red hover:underline cursor-pointer bg-transparent border-none"
+                                >
+                                  Todas
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPagesToPrint(new Set())}
+                                  className="text-[8px] uppercase tracking-widest font-bold text-stone-400 hover:underline cursor-pointer bg-transparent border-none"
+                                >
+                                  Ninguna
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={addPage}
+                                  className="text-[9px] uppercase tracking-widest font-bold text-editorial-red hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none"
+                                >
+                                  <Plus className="w-3 h-3" /> Añadir
+                                </button>
+                              </div>
                             </div>
 
                             <div className="border border-stone-200 divide-y divide-stone-100 bg-stone-50 max-h-[160px] overflow-y-auto">
@@ -1896,6 +1913,21 @@ export default function App() {
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
+                                    <input
+                                      type="checkbox"
+                                      checked={pagesToPrint.has(page.id)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        const newSet = new Set(pagesToPrint);
+                                        if (e.target.checked) {
+                                          newSet.add(page.id);
+                                        } else {
+                                          newSet.delete(page.id);
+                                        }
+                                        setPagesToPrint(newSet);
+                                      }}
+                                      className="w-4 h-4 accent-editorial-red cursor-pointer"
+                                    />
                                     <span className="text-[8px] font-mono text-stone-400 font-semibold">{index + 1}</span>
                                     <span className="text-[10px] truncate max-w-[120px] uppercase tracking-wider">
                                       {index === 0 ? `📙 Portada: ${page.coverTitle || 'Sin tít.'}` : `📄 Menú: ${page.categories.join(' + ').toUpperCase() || 'Vacío'}`}
@@ -2533,9 +2565,13 @@ export default function App() {
           }
         `}</style>
 
-        {pdfPages.map((page, index) => (
-          <div 
-            key={page.id} 
+        {pdfPages.map((page, index) => {
+          // Only render pages that are selected for printing
+          if (!pagesToPrint.has(page.id)) return null;
+
+          return (
+          <div
+            key={page.id}
             className="print-page flex flex-col justify-between"
             style={{ pageBreakAfter: index === pdfPages.length - 1 ? 'avoid' : 'always' }}
           >
@@ -2654,7 +2690,8 @@ export default function App() {
               </div>
             )}
           </div>
-        ))}
+        );
+        })}
       </div>
 
     </div>

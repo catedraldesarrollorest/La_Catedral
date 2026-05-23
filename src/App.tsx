@@ -1380,7 +1380,7 @@ export default function App() {
                           </div>
 
                         </div>
-                      ) : (
+                      ) : editingItem ? (
                         /* Edit item active subform editor */
                         <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
                           
@@ -1546,7 +1546,7 @@ export default function App() {
                           </div>
 
                         </form>
-                      )}
+                      ) : null}
 
                     </div>
                   )}

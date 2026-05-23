@@ -106,6 +106,7 @@ export default function App() {
   // Menu management inside Admin
   const [menuFilter, setMenuFilter] = useState<string>('');
   const [menuEditCategory, setMenuEditCategory] = useState<'all' | 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>('all');
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [priceMultiplier, setPriceMultiplier] = useState<number>(1);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState<boolean>(false);
@@ -363,6 +364,13 @@ export default function App() {
     if (editingItem?.id === id) {
       setEditingItem(null);
     }
+  };
+
+  const addDebugLog = (msg: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const fullMsg = `[${timestamp}] ${msg}`;
+    console.log(fullMsg);
+    setDebugLogs(prev => [...prev.slice(-9), fullMsg]);
   };
 
   const handleToggleAvailability = (id: string) => {
@@ -1248,6 +1256,16 @@ export default function App() {
                   {adminCategory === 'menu' && state && (
                     <div className="p-4 sm:p-8 space-y-6">
 
+                      {/* DEBUG LOG PANEL */}
+                      {debugLogs.length > 0 && (
+                        <div className="fixed bottom-4 right-4 bg-stone-900 text-stone-100 text-[10px] p-3 rounded border border-stone-700 max-w-xs max-h-40 overflow-y-auto font-mono z-40">
+                          <div className="font-bold mb-2 text-stone-400">DEBUG:</div>
+                          {debugLogs.map((log, i) => (
+                            <div key={i} className="text-stone-300 whitespace-pre-wrap break-words">{log}</div>
+                          ))}
+                        </div>
+                      )}
+
                       {!editingItem ? (
                         /* Default screen of A: List of items + filters */
                         <div className="space-y-6">
@@ -1363,24 +1381,15 @@ export default function App() {
                                       className="flex-1 cursor-pointer"
                                       onClick={() => {
                                         try {
-                                          console.log('🔍 Clicking item:', item.nameEs, 'ID:', item.id);
-                                          console.log('📦 Item data:', {
-                                            category: item.category,
-                                            subcategory: item.subcategory,
-                                            nameEs: item.nameEs,
-                                            nameEn: item.nameEn,
-                                            descEs: item.descEs,
-                                            descEn: item.descEn,
-                                            price: item.price,
-                                            available: item.available
-                                          });
-                                          console.log('✅ About to call setEditingItem');
+                                          addDebugLog('🔍 Click: ' + item.nameEs);
+                                          addDebugLog('📦 Fields OK: ' + [item.category, item.subcategory, item.nameEs].join('|'));
+                                          addDebugLog('⏳ Calling setEditingItem...');
                                           setEditingItem(item);
-                                          console.log('✅ setEditingItem called');
+                                          addDebugLog('✅ setEditingItem done');
                                           setIsAddingNew(false);
-                                          console.log('✅ setIsAddingNew(false) called');
+                                          addDebugLog('✅ Ready to render form');
                                         } catch(e) {
-                                          console.error('❌ Error setting editing item:', e);
+                                          addDebugLog('❌ ERROR: ' + (e as any).message);
                                           alert('Error: ' + (e as any).message);
                                         }
                                       }}
@@ -1399,7 +1408,7 @@ export default function App() {
                         /* Edit item active subform editor */
                         <>
                           {(() => {
-                            console.log('📝 Rendering form for item:', editingItem.nameEs);
+                            addDebugLog('📝 Form rendering: ' + editingItem.nameEs);
                             return null;
                           })()}
                           <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">

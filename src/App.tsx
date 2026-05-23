@@ -89,17 +89,29 @@ export default function App() {
     {
       id: 'page-3',
       type: 'menu',
-      coverTitle: 'BODEGA & BAR',
+      coverTitle: 'BAR & BEBIDAS',
       coverSubtitle: 'Bebidas de Selección',
       backgroundImage: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop',
       bgOpacity: 15,
-      categories: ['bebidas', 'espirituosos'],
+      categories: ['bebidas'],
       columns: 2,
       fontSize: 'sm',
       hideDescriptions: false
     },
     {
       id: 'page-4',
+      type: 'menu',
+      coverTitle: 'LICORES Y BODEGA',
+      coverSubtitle: 'Selección de Espirituosos',
+      backgroundImage: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=1200&auto=format&fit=crop',
+      bgOpacity: 12,
+      categories: ['espirituosos'],
+      columns: 1,
+      fontSize: 'base',
+      hideDescriptions: false
+    },
+    {
+      id: 'page-5',
       type: 'menu',
       coverTitle: 'DULCES TENTACIONES',
       coverSubtitle: 'Postres Artesanales',

@@ -48,7 +48,19 @@ const validateMenuItem = (item: MenuItem): { valid: boolean; errors: string[] } 
 
 // === ERROR BOUNDARY COMPONENT ===
 // === ULTRA-SIMPLE EDIT FORM ===
-function SimpleEditForm({ item, onSave, onCancel }: { item: MenuItem; onSave: (item: MenuItem) => void; onCancel: () => void }) {
+function SimpleEditForm({
+  item,
+  state,
+  onSave,
+  onCancel
+}: {
+  item: MenuItem
+  state: AppState | null
+  onSave: (newState: AppState) => void
+  onCancel: () => void
+}) {
+  if (!state) return <div>No state</div>;
+
   return (
     <div style={{ padding: '20px', background: '#fff', border: '1px solid #ddd' }}>
       <h2 style={{ marginBottom: '20px' }}>{item.nameEs}</h2>
@@ -56,29 +68,29 @@ function SimpleEditForm({ item, onSave, onCancel }: { item: MenuItem; onSave: (i
       <div style={{ marginBottom: '15px' }}>
         <label>Nombre (ES):</label><br />
         <input
+          id="nameEs"
           type="text"
           defaultValue={item.nameEs}
-          onChange={(e) => item.nameEs = e.target.value}
-          style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+          style={{ width: '100%', padding: '8px', marginTop: '5px', boxSizing: 'border-box' }}
         />
       </div>
 
       <div style={{ marginBottom: '15px' }}>
         <label>Precio:</label><br />
         <input
+          id="price"
           type="text"
           defaultValue={item.price}
-          onChange={(e) => item.price = e.target.value}
-          style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+          style={{ width: '100%', padding: '8px', marginTop: '5px', boxSizing: 'border-box' }}
         />
       </div>
 
       <div style={{ marginBottom: '15px' }}>
         <label>
           <input
+            id="available"
             type="checkbox"
             defaultChecked={item.available}
-            onChange={(e) => item.available = e.target.checked}
           />
           {' '}Disponible
         </label>
@@ -86,7 +98,28 @@ function SimpleEditForm({ item, onSave, onCancel }: { item: MenuItem; onSave: (i
 
       <div style={{ display: 'flex', gap: '10px' }}>
         <button
-          onClick={() => onSave(item)}
+          onClick={() => {
+            try {
+              // Get form values
+              const nameEs = (document.getElementById('nameEs') as HTMLInputElement)?.value || item.nameEs;
+              const price = (document.getElementById('price') as HTMLInputElement)?.value || item.price;
+              const available = (document.getElementById('available') as HTMLInputElement)?.checked ?? item.available;
+
+              // Update item
+              const updatedItem = { ...item, nameEs, price, available };
+
+              // Update state
+              const updatedMenuItems = state.menuItems.map(i =>
+                i.id === item.id ? updatedItem : i
+              );
+              const newState = { ...state, menuItems: updatedMenuItems };
+
+              // Save
+              onSave(newState);
+            } catch (err) {
+              alert('Error: ' + (err as any).message);
+            }
+          }}
           style={{ flex: 1, padding: '10px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}
         >
           Guardar
@@ -1543,9 +1576,11 @@ export default function App() {
                       ) : editingItem ? (
                         <SimpleEditForm
                           item={editingItem}
-                          onSave={(item) => {
-                            setEditingItem(item);
-                            handleSaveMenuItem({ preventDefault: () => {} } as any);
+                          state={state}
+                          onSave={(newState) => {
+                            saveStateToServer(newState, 'Guardado!');
+                            setEditingItem(null);
+                            setIsAddingNew(false);
                           }}
                           onCancel={() => {
                             setEditingItem(null);

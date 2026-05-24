@@ -1426,7 +1426,7 @@ export default function App() {
                         </div>
                       )}
 
-                      {!editingItem ? (
+                      {!editingItem && (
                         /* Default screen of A: List of items + filters */
                         <div className="space-y-6">
                           
@@ -1553,7 +1553,9 @@ export default function App() {
                           </div>
 
                         </div>
-                      ) : editingItem ? (
+                      )}
+
+                      {editingItem && (
                         <div style={{ padding: '20px', background: '#f5f5f5', border: '2px solid #333' }}>
                           <h3>{editingItem.nameEs}</h3>
                           <div style={{ marginBottom: '10px' }}>
@@ -1603,7 +1605,7 @@ export default function App() {
                             Cancelar
                           </button>
                         </div>
-                      ) : null}
+                      )}
 
                     </div>
                   )}

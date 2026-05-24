@@ -1574,19 +1574,55 @@ export default function App() {
 
                         </div>
                       ) : editingItem ? (
-                        <SimpleEditForm
-                          item={editingItem}
-                          state={state}
-                          onSave={(newState) => {
-                            saveStateToServer(newState, 'Guardado!');
-                            setEditingItem(null);
-                            setIsAddingNew(false);
-                          }}
-                          onCancel={() => {
-                            setEditingItem(null);
-                            setIsAddingNew(false);
-                          }}
-                        />
+                        <div style={{ padding: '20px', background: '#f5f5f5', border: '2px solid #333' }}>
+                          <h3>{editingItem.nameEs}</h3>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>Nombre:</label>
+                            <input
+                              type="text"
+                              defaultValue={editingItem.nameEs}
+                              id="edit_nameEs"
+                              style={{ width: '100%', padding: '5px' }}
+                            />
+                          </div>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>Precio:</label>
+                            <input
+                              type="text"
+                              defaultValue={editingItem.price}
+                              id="edit_price"
+                              style={{ width: '100%', padding: '5px' }}
+                            />
+                          </div>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>
+                              <input type="checkbox" id="edit_available" defaultChecked={editingItem.available} />
+                              Disponible
+                            </label>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!state) return;
+                              const nameEs = (document.getElementById('edit_nameEs') as HTMLInputElement).value;
+                              const price = (document.getElementById('edit_price') as HTMLInputElement).value;
+                              const available = (document.getElementById('edit_available') as HTMLInputElement).checked;
+
+                              const updated = { ...editingItem, nameEs, price, available };
+                              const newMenuItems = state.menuItems.map(item => item.id === editingItem.id ? updated : item);
+                              saveStateToServer({ ...state, menuItems: newMenuItems }, 'Guardado');
+                              setEditingItem(null);
+                            }}
+                            style={{ padding: '10px 20px', background: '#333', color: '#fff', marginRight: '10px' }}
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            onClick={() => setEditingItem(null)}
+                            style={{ padding: '10px 20px', background: '#ddd' }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
                       ) : null}
 
                     </div>

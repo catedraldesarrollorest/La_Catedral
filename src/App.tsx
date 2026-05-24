@@ -195,7 +195,7 @@ export default function App() {
   const DEFAULT_PIN = '1059';
 
   // Admin Dashboard States
-  const [adminCategory, setAdminCategory] = useState<'menu' | 'galeria' | 'general'>('menu');
+  const [adminCategory, setAdminCategory] = useState<'portada' | 'menu' | 'galeria' | 'general'>('portada');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [toastMessage, setToastMessage] = useState<string>('');
 
@@ -1245,7 +1245,19 @@ export default function App() {
                 
                 {/* Section selection slider tabs */}
                 <div className="bg-editorial-dark text-stone-400 px-4 sm:px-6 flex gap-2 sm:gap-6 border-b border-stone-800 shrink-0">
-                  <button 
+                  <button
+                    onClick={() => {
+                      setAdminCategory('portada');
+                      setEditingItem(null);
+                      setIsAddingNew(false);
+                    }}
+                    className={`cursor-pointer py-3.5 px-2 text-[10px] uppercase tracking-widest border-b-2 font-medium transition-all ${
+                      adminCategory === 'portada' ? 'border-editorial-red text-white' : 'border-transparent hover:text-white'
+                    }`}
+                  >
+                    📘 {lang === 'es' ? 'Portada' : 'Cover Page'}
+                  </button>
+                  <button
                     onClick={() => {
                       setAdminCategory('menu');
                       setEditingItem(null);
@@ -1285,6 +1297,164 @@ export default function App() {
 
                 {/* Main panel inner screen (can scroll) */}
                 <div className="flex-1 overflow-y-auto bg-editorial-cream">
+
+                  {/* COVER PAGE EDITOR */}
+                  {adminCategory === 'portada' && state && (
+                    <div className="p-4 sm:p-8 space-y-8">
+                      <div>
+                        <h2 className="font-cinzel text-2xl font-bold text-editorial-dark mb-6">
+                          📘 {lang === 'es' ? 'Editor de Portada' : 'Cover Page Editor'}
+                        </h2>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Left: Editor Controls */}
+                          <div className="space-y-6 bg-white p-6 border border-stone-200 rounded">
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Imagen de Portada' : 'Cover Image'}
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file && state) {
+                                    const reader = new FileReader();
+                                    reader.onload = (evt) => {
+                                      if (evt.target?.result && state.coverPage) {
+                                        const newCoverPage = { ...state.coverPage, imageSrc: evt.target.result as string };
+                                        saveStateToServer({ ...state, coverPage: newCoverPage }, '📸 Imagen actualizada');
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Altura de Imagen (px)' : 'Image Height (px)'}
+                              </label>
+                              <input
+                                type="number"
+                                min="100"
+                                max="600"
+                                value={state.coverPage?.imageHeight || 250}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, imageHeight: parseInt(e.target.value) || 250 };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* Spanish Title */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Título (Español)' : 'Title (Spanish)'}
+                              </label>
+                              <input
+                                type="text"
+                                value={state.coverPage?.titleEs || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, titleEs: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Título actualizado');
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* English Title */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Título (Inglés)' : 'Title (English)'}
+                              </label>
+                              <input
+                                type="text"
+                                value={state.coverPage?.titleEn || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, titleEn: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Título actualizado');
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* Spanish Subtitle */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Subtítulo (Español)' : 'Subtitle (Spanish)'}
+                              </label>
+                              <textarea
+                                value={state.coverPage?.subtitleEs || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, subtitleEs: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Subtítulo actualizado');
+                                  }
+                                }}
+                                rows={3}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* English Subtitle */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Subtítulo (Inglés)' : 'Subtitle (English)'}
+                              </label>
+                              <textarea
+                                value={state.coverPage?.subtitleEn || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, subtitleEn: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Subtítulo actualizado');
+                                  }
+                                }}
+                                rows={3}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Right: Preview */}
+                          <div className="bg-stone-100 rounded border border-stone-300 p-6 flex flex-col items-center justify-center min-h-[600px]">
+                            <div className="w-full max-w-sm space-y-4">
+                              <h3 className="text-xs uppercase tracking-widest font-bold text-stone-500 text-center">
+                                {lang === 'es' ? 'Vista Previa' : 'Preview'}
+                              </h3>
+
+                              {state.coverPage?.imageSrc && (
+                                <img
+                                  src={state.coverPage.imageSrc}
+                                  alt="Cover"
+                                  className="w-full rounded border border-stone-200"
+                                  style={{ height: `${state.coverPage.imageHeight}px`, objectFit: 'cover' }}
+                                />
+                              )}
+
+                              <div className="text-center space-y-2">
+                                <h1 className="font-cinzel text-3xl font-bold text-editorial-dark">
+                                  {lang === 'es' ? state.coverPage?.titleEs : state.coverPage?.titleEn}
+                                </h1>
+                                <p className="font-serif italic text-lg text-editorial-red">
+                                  {lang === 'es' ? state.coverPage?.subtitleEs : state.coverPage?.subtitleEn}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* SUB PANEL A: MENU ITEMS LIST OR EDIT/FORM */}
                   {adminCategory === 'menu' && state && (

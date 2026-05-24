@@ -1540,27 +1540,7 @@ export default function App() {
                                     <div
                                       className="flex-1 cursor-pointer"
                                       onClick={() => {
-                                        try {
-                                          addDebugLog('🔍 Click: ' + item.nameEs);
-                                          addDebugLog('🔄 Normalizing item...');
-                                          const normalized = normalizeMenuItem(item);
-                                          addDebugLog('✓ Normalized OK');
-
-                                          const validation = validateMenuItem(normalized);
-                                          if (!validation.valid) {
-                                            addDebugLog('⚠️  Validation errors: ' + validation.errors.join(', '));
-                                          }
-
-                                          addDebugLog('⏳ setEditingItem...');
-                                          setEditingItem(normalized);
-                                          addDebugLog('✅ setEditingItem OK');
-                                          setIsAddingNew(false);
-                                          addDebugLog('✅ Ready');
-                                        } catch(e) {
-                                          const errMsg = (e as any).message || String(e);
-                                          addDebugLog('❌ ERROR: ' + errMsg);
-                                          alert('Error: ' + errMsg);
-                                        }
+                                        setEditingItem(item);
                                       }}
                                     >
                                       <p className="text-sm font-semibold">{item.nameEs}</p>

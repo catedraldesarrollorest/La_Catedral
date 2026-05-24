@@ -7,7 +7,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './src/initialData.js';
+import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './src/initialData.js';
 import { AppState } from './src/types.js';
 import dotenv from 'dotenv';
 
@@ -20,7 +20,8 @@ const __dirname = path.dirname(__filename);
 let appState: AppState = {
   menuItems: [...initialMenuItems],
   galleryItems: [...initialGalleryItems],
-  generalInfo: { ...initialGeneralInfo }
+  generalInfo: { ...initialGeneralInfo },
+  coverPage: { ...initialCoverPage }
 };
 
 async function startServer() {

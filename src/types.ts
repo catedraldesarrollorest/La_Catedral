@@ -62,8 +62,18 @@ export interface GeneralInfo {
   whatsappGroup: string;
 }
 
+export interface CoverPage {
+  imageSrc: string;
+  imageHeight: number;
+  titleEs: string;
+  titleEn: string;
+  subtitleEs: string;
+  subtitleEn: string;
+}
+
 export interface AppState {
   menuItems: MenuItem[];
   galleryItems: GalleryItem[];
   generalInfo: GeneralInfo;
+  coverPage: CoverPage;
 }

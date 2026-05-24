@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MenuItem, GalleryItem, GeneralInfo } from './types.js';
+import { MenuItem, GalleryItem, GeneralInfo, CoverPage } from './types.js';
 
 export const initialMenuItems: MenuItem[] = [
   // BEBIDAS
@@ -507,4 +507,13 @@ export const initialGeneralInfo: GeneralInfo = {
   instagram: 'lacatedralcuba',
   facebook: 'mirestaurantencuba',
   whatsappGroup: 'https://chat.whatsapp.com/BoaqXwjmrjsEPLkzYY3bLI?mode=gi_t'
+};
+
+export const initialCoverPage: CoverPage = {
+  imageSrc: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=800&auto=format&fit=crop',
+  imageHeight: 250,
+  titleEs: 'LA CATEDRAL',
+  titleEn: 'LA CATEDRAL',
+  subtitleEs: '"Rindiendo culto permanente a la buena mesa en La Habana"',
+  subtitleEn: '"A permanent devotion to fine culinary art in Havana"'
 };

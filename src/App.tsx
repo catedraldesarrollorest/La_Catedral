@@ -11,8 +11,8 @@ import {
   ExternalLink, AlertCircle, Image as ImageIcon, ArrowLeft,
   ChevronDown, Settings
 } from 'lucide-react';
-import { MenuItem, GalleryItem, GeneralInfo, AppState } from './types.js';
-import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './initialData.js';
+import { MenuItem, GalleryItem, GeneralInfo, CoverPage, AppState } from './types.js';
+import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './initialData.js';
 
 // === VALIDATION & NORMALIZATION LAYER ===
 const normalizeMenuItem = (item: any): MenuItem => {
@@ -265,7 +265,8 @@ export default function App() {
       const defaultState: AppState = {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
-        generalInfo: initialGeneralInfo
+        generalInfo: initialGeneralInfo,
+        coverPage: initialCoverPage
       };
       setState(defaultState);
       setEditedInfo(initialGeneralInfo);
@@ -320,7 +321,8 @@ export default function App() {
     const defaultState: AppState = {
       menuItems: initialMenuItems,
       galleryItems: initialGalleryItems,
-      generalInfo: initialGeneralInfo
+      generalInfo: initialGeneralInfo,
+      coverPage: initialCoverPage
     };
 
     localStorage.setItem('catedral_rest_state', JSON.stringify(defaultState));

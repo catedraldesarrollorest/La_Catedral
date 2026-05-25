@@ -41,6 +41,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<'es' | 'en'>('es');
   const [isLocalMode, setIsLocalMode] = useState<boolean>(false);
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
   
   // Client Tabs
   const [activeGalleryTab, setActiveGalleryTab] = useState<'local' | 'bebidas' | 'platos' | 'postres'>('local');
@@ -1348,8 +1349,25 @@ export default function App() {
                             <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
                               {lang === 'es' ? 'Imagen de Fondo' : 'Background Image'}
                             </label>
-                            <div className="relative">
+
+                            {/* Current Image Preview */}
+                            {state.coverPage.imageSrc && (
+                              <div className="mb-3 border border-stone-200 overflow-hidden bg-stone-50">
+                                <img
+                                  src={state.coverPage.imageSrc}
+                                  alt="Preview"
+                                  className="w-full h-32 object-cover"
+                                />
+                              </div>
+                            )}
+
+                            {/* Upload Area */}
+                            <div
+                              className="border-2 border-dashed border-stone-300 rounded p-4 text-center bg-stone-50 cursor-pointer hover:border-editorial-red hover:bg-red-50 transition-all"
+                              onClick={() => coverImageInputRef.current?.click()}
+                            >
                               <input
+                                ref={coverImageInputRef}
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => {
@@ -1365,9 +1383,33 @@ export default function App() {
                                     reader.readAsDataURL(file);
                                   }
                                 }}
-                                className="w-full"
+                                className="hidden"
                               />
+                              <Upload className="w-6 h-6 text-stone-400 mx-auto mb-2" />
+                              <p className="text-[11px] uppercase tracking-wider font-semibold text-stone-600 mb-1">
+                                {lang === 'es' ? 'Haz click o arrastra imagen' : 'Click or drag image'}
+                              </p>
+                              <p className="text-[9px] text-stone-500">
+                                {lang === 'es' ? 'JPG, PNG, WebP' : 'JPG, PNG, WebP'}
+                              </p>
                             </div>
+
+                            {/* Clear Button */}
+                            {state.coverPage.imageSrc && (
+                              <button
+                                onClick={() => {
+                                  const newCoverPage = {
+                                    ...state.coverPage,
+                                    imageSrc: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1200'
+                                  };
+                                  setState({ ...state, coverPage: newCoverPage });
+                                  saveStateToServer({ ...state, coverPage: newCoverPage });
+                                }}
+                                className="w-full px-3 py-2 bg-red-50 border border-red-200 text-[10px] uppercase tracking-widest font-semibold text-red-700 hover:bg-red-100 transition-all"
+                              >
+                                {lang === 'es' ? 'Restablecer imagen predeterminada' : 'Reset to default image'}
+                              </button>
+                            )}
                           </div>
 
                           {/* Image Height Control */}

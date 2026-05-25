@@ -322,6 +322,9 @@ export default function App() {
       setState(updatedState);
       setSaveStatus('success');
       showToast(message);
+
+      // Refresh state from server to ensure sync
+      setTimeout(() => fetchState(), 500);
     } catch (err) {
       console.error('Failed to save, using localStorage', err);
       setState(updatedState);

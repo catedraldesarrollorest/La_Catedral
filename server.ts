@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
-import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './src/initialData.js';
+import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './src/initialData.js';
 import { AppState } from './src/types.js';
 import dotenv from 'dotenv';
 
@@ -42,7 +42,8 @@ async function startServer() {
       return {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
-        generalInfo: initialGeneralInfo
+        generalInfo: initialGeneralInfo,
+        coverPage: initialCoverPage
       };
     }
 
@@ -84,13 +85,14 @@ async function startServer() {
         whatsappGroup: infoRes.data[0].whatsapp_group || ''
       } : initialGeneralInfo;
 
-      return { menuItems, galleryItems, generalInfo };
+      return { menuItems, galleryItems, generalInfo, coverPage: initialCoverPage };
     } catch (err) {
       console.error('Error fetching from Supabase:', err);
       return {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
-        generalInfo: initialGeneralInfo
+        generalInfo: initialGeneralInfo,
+        coverPage: initialCoverPage
       };
     }
   };

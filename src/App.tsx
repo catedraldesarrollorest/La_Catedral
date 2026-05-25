@@ -11,8 +11,8 @@ import {
   ExternalLink, AlertCircle, Image as ImageIcon, ArrowLeft,
   ChevronDown, Settings, FileText, Printer, ArrowUp, ArrowDown, Layers
 } from 'lucide-react';
-import { MenuItem, GalleryItem, GeneralInfo, AppState } from './types.js';
-import { initialMenuItems, initialGalleryItems, initialGeneralInfo } from './initialData.js';
+import { MenuItem, GalleryItem, GeneralInfo, CoverPage, AppState } from './types.js';
+import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './initialData.js';
 import { supabase } from './supabaseClient.js';
 
 export interface MenuPageConfig {
@@ -54,7 +54,7 @@ export default function App() {
   const DEFAULT_PIN = '1059';
 
   // Admin Dashboard States
-  const [adminCategory, setAdminCategory] = useState<'menu' | 'galeria' | 'general' | 'pdf'>('menu');
+  const [adminCategory, setAdminCategory] = useState<'portada' | 'menu' | 'galeria' | 'general' | 'pdf'>('portada');
   const [pdfPages, setPdfPages] = useState<MenuPageConfig[]>([
     {
       id: 'page-1',
@@ -175,6 +175,7 @@ export default function App() {
 
   // General setting inputs (temp until saved)
   const [editedInfo, setEditedInfo] = useState<GeneralInfo | null>(null);
+  const [editedCoverPage, setEditedCoverPage] = useState<CoverPage | null>(null);
 
   // --- PDF Page Mutation Handlers ---
   const movePageUp = (index: number) => {
@@ -259,7 +260,8 @@ export default function App() {
       setState({
         menuItems: data.menuItems || [],
         galleryItems: data.galleryItems || [],
-        generalInfo: data.generalInfo || initialGeneralInfo
+        generalInfo: data.generalInfo || initialGeneralInfo,
+        coverPage: data.coverPage || initialCoverPage
       });
       setEditedInfo(data.generalInfo || initialGeneralInfo);
       setError(null);
@@ -284,7 +286,8 @@ export default function App() {
       const defaultState: AppState = {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
-        generalInfo: initialGeneralInfo
+        generalInfo: initialGeneralInfo,
+        coverPage: initialCoverPage
       };
       setState(defaultState);
       setEditedInfo(initialGeneralInfo);
@@ -335,7 +338,8 @@ export default function App() {
     const defaultState: AppState = {
       menuItems: initialMenuItems,
       galleryItems: initialGalleryItems,
-      generalInfo: initialGeneralInfo
+      generalInfo: initialGeneralInfo,
+      coverPage: initialCoverPage
     };
 
     localStorage.setItem('catedral_rest_state', JSON.stringify(defaultState));
@@ -1263,7 +1267,19 @@ export default function App() {
                 
                 {/* Section selection slider tabs */}
                 <div className="bg-editorial-dark text-stone-400 px-4 sm:px-6 flex gap-2 sm:gap-6 border-b border-stone-800 shrink-0">
-                  <button 
+                  <button
+                    onClick={() => {
+                      setAdminCategory('portada');
+                      setEditingItem(null);
+                      setIsAddingNew(false);
+                    }}
+                    className={`cursor-pointer py-3.5 px-2 text-[10px] uppercase tracking-widest border-b-2 font-medium transition-all ${
+                      adminCategory === 'portada' ? 'border-editorial-red text-white' : 'border-transparent hover:text-white'
+                    }`}
+                  >
+                    📘 {lang === 'es' ? 'Portada' : 'Cover'}
+                  </button>
+                  <button
                     onClick={() => {
                       setAdminCategory('menu');
                       setEditingItem(null);
@@ -1315,6 +1331,174 @@ export default function App() {
 
                 {/* Main panel inner screen (can scroll) */}
                 <div className="flex-1 overflow-y-auto bg-editorial-cream">
+
+                  {/* SUB PANEL: COVER PAGE EDITOR */}
+                  {adminCategory === 'portada' && state && (
+                    <div className="p-4 sm:p-8 space-y-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Left: Form Inputs */}
+                        <div className="space-y-6">
+                          <div>
+                            <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest mb-4 text-editorial-dark">
+                              {lang === 'es' ? 'Editar Portada' : 'Edit Cover Page'}
+                            </h3>
+                          </div>
+
+                          {/* Image Upload */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Imagen de Fondo' : 'Background Image'}
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      const base64 = event.target?.result as string;
+                                      const newCoverPage = { ...state.coverPage, imageSrc: base64 };
+                                      setState({ ...state, coverPage: newCoverPage });
+                                      saveState({ ...state, coverPage: newCoverPage });
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Image Height Control */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Alto de la Imagen' : 'Image Height'} ({state.coverPage.imageHeight}px)
+                            </label>
+                            <input
+                              type="range"
+                              min="100"
+                              max="600"
+                              value={state.coverPage.imageHeight}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, imageHeight: parseInt(e.target.value) };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveState({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full"
+                            />
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                min="100"
+                                max="600"
+                                value={state.coverPage.imageHeight}
+                                onChange={(e) => {
+                                  const height = Math.max(100, Math.min(600, parseInt(e.target.value) || 250));
+                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                  setState({ ...state, coverPage: newCoverPage });
+                                  saveState({ ...state, coverPage: newCoverPage });
+                                }}
+                                className="w-20 px-3 py-2 border border-stone-300 text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Title Spanish */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Título (Español)' : 'Title (Spanish)'}
+                            </label>
+                            <input
+                              type="text"
+                              value={state.coverPage.titleEs}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, titleEs: e.target.value };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveState({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
+                            />
+                          </div>
+
+                          {/* Title English */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Título (Inglés)' : 'Title (English)'}
+                            </label>
+                            <input
+                              type="text"
+                              value={state.coverPage.titleEn}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, titleEn: e.target.value };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveState({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
+                            />
+                          </div>
+
+                          {/* Subtitle Spanish */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Subtítulo (Español)' : 'Subtitle (Spanish)'}
+                            </label>
+                            <textarea
+                              value={state.coverPage.subtitleEs}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, subtitleEs: e.target.value };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveState({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
+                              rows={3}
+                            />
+                          </div>
+
+                          {/* Subtitle English */}
+                          <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Subtítulo (Inglés)' : 'Subtitle (English)'}
+                            </label>
+                            <textarea
+                              value={state.coverPage.subtitleEn}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, subtitleEn: e.target.value };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveState({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Right: Live Preview */}
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest mb-4 text-editorial-dark">
+                            {lang === 'es' ? 'Vista Previa' : 'Preview'}
+                          </h3>
+                          <div
+                            className="w-full bg-cover bg-center border border-stone-300 flex flex-col items-center justify-center text-center"
+                            style={{
+                              backgroundImage: `url(${state.coverPage.imageSrc})`,
+                              height: `${state.coverPage.imageHeight}px`
+                            }}
+                          >
+                            <div className="bg-black/50 w-full h-full flex flex-col items-center justify-center">
+                              <h2 className="font-cinzel text-3xl font-bold text-white mb-4">
+                                {lang === 'es' ? state.coverPage.titleEs : state.coverPage.titleEn}
+                              </h2>
+                              <p className="text-white text-sm font-light max-w-md">
+                                {lang === 'es' ? state.coverPage.subtitleEs : state.coverPage.subtitleEn}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* SUB PANEL A: MENU ITEMS LIST OR EDIT/FORM */}
                   {adminCategory === 'menu' && (

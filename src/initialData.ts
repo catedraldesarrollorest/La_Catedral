@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MenuItem, GalleryItem, GeneralInfo } from './types.js';
+import { MenuItem, GalleryItem, GeneralInfo, CoverPage } from './types.js';
 
 export const initialMenuItems: MenuItem[] = [
   // BEBIDAS
@@ -507,4 +507,13 @@ export const initialGeneralInfo: GeneralInfo = {
   instagram: 'lacatedralcuba',
   facebook: 'mirestaurantencuba',
   whatsappGroup: 'https://chat.whatsapp.com/BoaqXwjmrjsEPLkzYY3bLI?mode=gi_t'
+};
+
+export const initialCoverPage: CoverPage = {
+  imageSrc: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1200',
+  imageHeight: 250,
+  titleEs: 'La Catedral',
+  titleEn: 'La Catedral',
+  subtitleEs: 'Restaurante Cubano Auténtico',
+  subtitleEn: 'Authentic Cuban Restaurant'
 };

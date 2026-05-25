@@ -1769,10 +1769,10 @@ export default function App() {
                                 value={editingItem?.subcategory}
                                 onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
                                 className={`w-full bg-stone-50 border px-3 py-2 text-xs focus:outline-none focus:border-editorial-red ${
-                                  editingItem?.subcategory.trim() ? 'border-stone-300' : 'border-red-300'
+                                  editingItem?.subcategory?.trim() ? 'border-stone-300' : 'border-red-300'
                                 }`}
                               />
-                              {!editingItem?.subcategory.trim() && (
+                              {!editingItem?.subcategory?.trim() && (
                                 <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
                               )}
                             </div>
@@ -1788,10 +1788,10 @@ export default function App() {
                                 value={editingItem?.nameEs}
                                 onChange={(e) => setEditingItem({ ...editingItem, nameEs: e.target.value })}
                                 className={`w-full bg-stone-50 border px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold ${
-                                  editingItem?.nameEs.trim() ? 'border-stone-300' : 'border-red-300'
+                                  editingItem?.nameEs?.trim() ? 'border-stone-300' : 'border-red-300'
                                 }`}
                               />
-                              {!editingItem?.nameEs.trim() && (
+                              {!editingItem?.nameEs?.trim() && (
                                 <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
                               )}
                             </div>

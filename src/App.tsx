@@ -2816,12 +2816,12 @@ export default function App() {
                       <span>{lang === 'es' ? 'Valores de Fábrica' : 'Reset defaults'}</span>
                     </button>
                     
-                    <button 
-                      onClick={() => setIsAuthenticated(false)}
+                    <button
+                      onClick={() => setAdminOpen(false)}
                       type="button"
-                      className="cursor-pointer bg-editorial-dark hover:bg-stone-800 text-stone-200 px-4 py-2 text-[9px] uppercase tracking-widest font-semibold transition-all"
+                      className="cursor-pointer bg-editorial-red hover:bg-editorial-dark text-white px-4 py-2 text-[9px] uppercase tracking-widest font-semibold transition-all"
                     >
-                      🛡️ {lang === 'es' ? 'Cerrar Sesión' : 'Lock session'}
+                      ✓ {lang === 'es' ? 'Volver a la Web' : 'Back to Website'}
                     </button>
                   </div>
                 </footer>

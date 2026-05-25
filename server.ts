@@ -48,10 +48,11 @@ async function startServer() {
     }
 
     try {
-      const [menuRes, galleryRes, infoRes] = await Promise.all([
+      const [menuRes, galleryRes, infoRes, coverRes] = await Promise.all([
         supabase.from('menu_items').select('*'),
         supabase.from('gallery_items').select('*'),
-        supabase.from('general_info').select('*').eq('id', 'default')
+        supabase.from('general_info').select('*').eq('id', 'default'),
+        supabase.from('cover_page').select('*').eq('id', 'default')
       ]);
 
       const menuItems = (menuRes.data || []).map((item: any) => ({
@@ -85,7 +86,16 @@ async function startServer() {
         whatsappGroup: infoRes.data[0].whatsapp_group || ''
       } : initialGeneralInfo;
 
-      return { menuItems, galleryItems, generalInfo, coverPage: initialCoverPage };
+      const coverPage = coverRes.data?.[0] ? {
+        imageSrc: coverRes.data[0].image_src || initialCoverPage.imageSrc,
+        imageHeight: coverRes.data[0].image_height || initialCoverPage.imageHeight,
+        titleEs: coverRes.data[0].title_es || initialCoverPage.titleEs,
+        titleEn: coverRes.data[0].title_en || initialCoverPage.titleEn,
+        subtitleEs: coverRes.data[0].subtitle_es || initialCoverPage.subtitleEs,
+        subtitleEn: coverRes.data[0].subtitle_en || initialCoverPage.subtitleEn
+      } : initialCoverPage;
+
+      return { menuItems, galleryItems, generalInfo, coverPage };
     } catch (err) {
       console.error('Error fetching from Supabase:', err);
       return {
@@ -95,6 +105,7 @@ async function startServer() {
         coverPage: initialCoverPage
       };
     }
+  };
   };
 
   // API Route: Get complete state (supports both /api/state and /api/sync)
@@ -173,6 +184,21 @@ async function startServer() {
         await supabase.from('general_info').upsert(infoData);
       }
 
+      // Save cover page
+      if (newState.coverPage) {
+        const coverData = {
+          id: 'default',
+          image_src: newState.coverPage.imageSrc,
+          image_height: newState.coverPage.imageHeight,
+          title_es: newState.coverPage.titleEs,
+          title_en: newState.coverPage.titleEn,
+          subtitle_es: newState.coverPage.subtitleEs,
+          subtitle_en: newState.coverPage.subtitleEn
+        };
+
+        await supabase.from('cover_page').upsert(coverData);
+      }
+
       const state = await fetchStateFromSupabase();
       res.json({ success: true, message: 'Se han guardado los cambios exitosamente.', state });
     } catch (err) {
@@ -231,6 +257,19 @@ async function startServer() {
       };
 
       await supabase.from('general_info').upsert(infoData);
+
+      // Reset cover page
+      const coverData = {
+        id: 'default',
+        image_src: initialCoverPage.imageSrc,
+        image_height: initialCoverPage.imageHeight,
+        title_es: initialCoverPage.titleEs,
+        title_en: initialCoverPage.titleEn,
+        subtitle_es: initialCoverPage.subtitleEs,
+        subtitle_en: initialCoverPage.subtitleEn
+      };
+
+      await supabase.from('cover_page').upsert(coverData);
 
       const state = await fetchStateFromSupabase();
       res.json({ success: true, message: 'Se ha restablecido el menú de fábrica.', state });

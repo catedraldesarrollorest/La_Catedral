@@ -746,14 +746,13 @@ export default function App() {
                   </div>
 
                   <h1 className="text-6xl sm:text-8xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
-                    LA <br className="hidden sm:inline" />
-                    CATEDRAL
+                    {lang === 'es' ? state?.coverPage.titleEs : state?.coverPage.titleEn}
                   </h1>
                 </div>
 
                 <div className="space-y-4 max-w-xl">
                   <p className="font-serif italic text-2xl sm:text-3xl text-editorial-red leading-snug">
-                    {lang === 'es' ? '“Rindiendo culto permanente a la buena mesa en La Habana”' : '“A permanent devotion to fine culinary art in Havana”'}
+                    "{lang === 'es' ? state?.coverPage.subtitleEs : state?.coverPage.subtitleEn}"
                   </p>
                   
                   {/* Active schedule displayed elegantly */}
@@ -1361,7 +1360,7 @@ export default function App() {
                                       const base64 = event.target?.result as string;
                                       const newCoverPage = { ...state.coverPage, imageSrc: base64 };
                                       setState({ ...state, coverPage: newCoverPage });
-                                      saveState({ ...state, coverPage: newCoverPage });
+                                      saveStateToServer({ ...state, coverPage: newCoverPage });
                                     };
                                     reader.readAsDataURL(file);
                                   }
@@ -1384,7 +1383,7 @@ export default function App() {
                               onChange={(e) => {
                                 const newCoverPage = { ...state.coverPage, imageHeight: parseInt(e.target.value) };
                                 setState({ ...state, coverPage: newCoverPage });
-                                saveState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
                               className="w-full"
                             />
@@ -1398,7 +1397,7 @@ export default function App() {
                                   const height = Math.max(100, Math.min(600, parseInt(e.target.value) || 250));
                                   const newCoverPage = { ...state.coverPage, imageHeight: height };
                                   setState({ ...state, coverPage: newCoverPage });
-                                  saveState({ ...state, coverPage: newCoverPage });
+                                  saveStateToServer({ ...state, coverPage: newCoverPage });
                                 }}
                                 className="w-20 px-3 py-2 border border-stone-300 text-xs"
                               />
@@ -1416,7 +1415,7 @@ export default function App() {
                               onChange={(e) => {
                                 const newCoverPage = { ...state.coverPage, titleEs: e.target.value };
                                 setState({ ...state, coverPage: newCoverPage });
-                                saveState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
                               className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
                             />
@@ -1433,7 +1432,7 @@ export default function App() {
                               onChange={(e) => {
                                 const newCoverPage = { ...state.coverPage, titleEn: e.target.value };
                                 setState({ ...state, coverPage: newCoverPage });
-                                saveState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
                               className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
                             />
@@ -1449,7 +1448,7 @@ export default function App() {
                               onChange={(e) => {
                                 const newCoverPage = { ...state.coverPage, subtitleEs: e.target.value };
                                 setState({ ...state, coverPage: newCoverPage });
-                                saveState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
                               className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
                               rows={3}
@@ -1466,7 +1465,7 @@ export default function App() {
                               onChange={(e) => {
                                 const newCoverPage = { ...state.coverPage, subtitleEn: e.target.value };
                                 setState({ ...state, coverPage: newCoverPage });
-                                saveState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
                               className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
                               rows={3}

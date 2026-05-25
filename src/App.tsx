@@ -405,11 +405,11 @@ export default function App() {
     if (!state || !editingItem) return;
 
     // Validate required fields
-    if (!editingItem.nameEs.trim()) {
+    if (!editingItem?.nameEs.trim()) {
       showToast('Por favor completa el nombre en español');
       return;
     }
-    if (!editingItem.subcategory.trim()) {
+    if (!editingItem?.subcategory.trim()) {
       showToast('Por favor completa la subcategoría');
       return;
     }
@@ -422,7 +422,7 @@ export default function App() {
     } else {
       // Edit existing
       updatedMenuItems = updatedMenuItems.map(item =>
-        item.id === editingItem.id ? editingItem : item
+        item.id === editingItem?.id ? editingItem : item
       );
     }
 
@@ -1717,16 +1717,16 @@ export default function App() {
                           </div>
 
                         </div>
-                      ) : editingItem ? (
+                      ) : editingItem && state ? (
                         /* Edit item active subform editor */
                         <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
-                          
+
                           <div className="flex justify-between items-center border-b border-stone-100 pb-4">
                             <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
                               {isAddingNew ? (lang === 'es' ? 'NUEVO ELEMENTO DE LA CARTA' : 'ADD NEW MENU ITEM') : (lang === 'es' ? 'MODIFICAR ELEMENTO DE LA CARTA' : 'EDIT MENU ITEM')}
                             </h3>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => {
                                 setEditingItem(null);
                                 setIsAddingNew(false);
@@ -1739,14 +1739,14 @@ export default function App() {
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            
+
                             {/* Category Selector */}
                             <div className="space-y-1">
                               <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
                                 Categoría General
                               </label>
-                              <select 
-                                value={editingItem.category}
+                              <select
+                                value={editingItem?.category || ''}
                                 onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value as any })}
                                 className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
                               >
@@ -1766,13 +1766,13 @@ export default function App() {
                               <input
                                 type="text"
                                 placeholder="Ej: Sin Alcohol, Carnes, Tradicionales Cubanos"
-                                value={editingItem.subcategory}
+                                value={editingItem?.subcategory}
                                 onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
                                 className={`w-full bg-stone-50 border px-3 py-2 text-xs focus:outline-none focus:border-editorial-red ${
-                                  editingItem.subcategory.trim() ? 'border-stone-300' : 'border-red-300'
+                                  editingItem?.subcategory.trim() ? 'border-stone-300' : 'border-red-300'
                                 }`}
                               />
-                              {!editingItem.subcategory.trim() && (
+                              {!editingItem?.subcategory.trim() && (
                                 <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
                               )}
                             </div>
@@ -1785,13 +1785,13 @@ export default function App() {
                               <input
                                 type="text"
                                 placeholder="..."
-                                value={editingItem.nameEs}
+                                value={editingItem?.nameEs}
                                 onChange={(e) => setEditingItem({ ...editingItem, nameEs: e.target.value })}
                                 className={`w-full bg-stone-50 border px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold ${
-                                  editingItem.nameEs.trim() ? 'border-stone-300' : 'border-red-300'
+                                  editingItem?.nameEs.trim() ? 'border-stone-300' : 'border-red-300'
                                 }`}
                               />
-                              {!editingItem.nameEs.trim() && (
+                              {!editingItem?.nameEs.trim() && (
                                 <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
                               )}
                             </div>
@@ -1804,7 +1804,7 @@ export default function App() {
                               <input 
                                 type="text"
                                 placeholder="Ej: Fresh Strawberry Lemonade..."
-                                value={editingItem.nameEn}
+                                value={editingItem?.nameEn}
                                 onChange={(e) => setEditingItem({ ...editingItem, nameEn: e.target.value })}
                                 className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif"
                               />
@@ -1818,7 +1818,7 @@ export default function App() {
                               <input 
                                 type="text"
                                 placeholder="Ej. 1200 CUP o 5.00 USD"
-                                value={editingItem.price}
+                                value={editingItem?.price}
                                 onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })}
                                 className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
                                 required
@@ -1833,7 +1833,7 @@ export default function App() {
                               <textarea 
                                 rows={2}
                                 placeholder="Ingredientes, modo de preparación..."
-                                value={editingItem.descEs}
+                                value={editingItem?.descEs}
                                 onChange={(e) => setEditingItem({ ...editingItem, descEs: e.target.value })}
                                 className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
                               />
@@ -1847,7 +1847,7 @@ export default function App() {
                               <textarea 
                                 rows={2}
                                 placeholder="..."
-                                value={editingItem.descEn}
+                                value={editingItem?.descEn}
                                 onChange={(e) => setEditingItem({ ...editingItem, descEn: e.target.value })}
                                 className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
                               />
@@ -1858,7 +1858,7 @@ export default function App() {
                               <input 
                                 type="checkbox"
                                 id="item_available_check"
-                                checked={editingItem.available}
+                                checked={editingItem?.available}
                                 onChange={(e) => setEditingItem({ ...editingItem, available: e.target.checked })}
                                 className="w-4 h-4 text-editorial-red accent-editorial-red"
                               />

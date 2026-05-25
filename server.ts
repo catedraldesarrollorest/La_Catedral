@@ -106,7 +106,6 @@ async function startServer() {
       };
     }
   };
-  };
 
   // API Route: Get complete state (supports both /api/state and /api/sync)
   const handleGetState = async (req: any, res: any) => {

@@ -1352,10 +1352,10 @@ export default function App() {
                             </h3>
                           </div>
 
-                          {/* Image URL Input */}
+                          {/* Image Upload */}
                           <div className="space-y-2">
                             <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'URL de Imagen de Fondo' : 'Background Image URL'}
+                              {lang === 'es' ? 'Imagen de Fondo' : 'Background Image'}
                             </label>
 
                             {/* Current Image Preview */}
@@ -1366,24 +1366,44 @@ export default function App() {
                                   alt="Preview"
                                   className="w-full h-32 object-cover"
                                   onError={(e) => {
-                                    (e.target as any).src = 'https://via.placeholder.com/300x150?text=Imagen+no+valida';
+                                    (e.target as any).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="150"%3E%3Crect fill="%23e5e5e5" width="300" height="150"/%3E%3C/svg%3E';
                                   }}
                                 />
                               </div>
                             )}
 
-                            {/* URL Input */}
-                            <input
-                              type="text"
-                              placeholder={lang === 'es' ? 'Pega la URL de una imagen (https://...)' : 'Paste image URL (https://...)'}
-                              value={state.coverPage.imageSrc}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, imageSrc: e.target.value };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red font-mono"
-                            />
+                            {/* Upload Area */}
+                            <div
+                              className="border-2 border-dashed border-stone-300 rounded p-4 text-center bg-stone-50 cursor-pointer hover:border-editorial-red hover:bg-red-50 transition-all"
+                              onClick={() => coverImageInputRef.current?.click()}
+                            >
+                              <input
+                                ref={coverImageInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      const base64 = event.target?.result as string;
+                                      const newCoverPage = { ...state.coverPage, imageSrc: base64 };
+                                      setState({ ...state, coverPage: newCoverPage });
+                                      saveStateToServer({ ...state, coverPage: newCoverPage });
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                              <Upload className="w-6 h-6 text-stone-400 mx-auto mb-2" />
+                              <p className="text-[11px] uppercase tracking-wider font-semibold text-stone-600 mb-1">
+                                {lang === 'es' ? 'Toca para elegir foto' : 'Tap to choose photo'}
+                              </p>
+                              <p className="text-[9px] text-stone-500">
+                                {lang === 'es' ? 'JPG, PNG, WebP' : 'JPG, PNG, WebP'}
+                              </p>
+                            </div>
 
                             {/* Clear Button */}
                             <button

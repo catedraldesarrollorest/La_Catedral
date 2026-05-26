@@ -727,7 +727,12 @@ export default function App() {
         <main className="flex-1 mt-26">
 
           {/* 1. HERO MAIN EDITORIAL PRESENTATION */}
-          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden">
+          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden" style={{
+            backgroundImage: `url(${state?.coverPage.imageSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}>
+            <div className="absolute inset-0 bg-white/70"></div>
             <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
               backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 40px, #000 40px, #000 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, #000 40px, #000 41px)'
             }}></div>

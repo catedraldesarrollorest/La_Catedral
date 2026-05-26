@@ -89,14 +89,15 @@ async function startServer() {
         whatsappGroup: infoRes.data[0].whatsapp_group || ''
       } : initialGeneralInfo;
 
-      const coverPage = coverRes.data?.[0] ? {
-        imageSrc: coverRes.data[0].image_src || initialCoverPage.imageSrc,
-        imageHeight: coverRes.data[0].image_height || initialCoverPage.imageHeight,
-        titleEs: coverRes.data[0].title_es || initialCoverPage.titleEs,
-        titleEn: coverRes.data[0].title_en || initialCoverPage.titleEn,
-        subtitleEs: coverRes.data[0].subtitle_es || initialCoverPage.subtitleEs,
-        subtitleEn: coverRes.data[0].subtitle_en || initialCoverPage.subtitleEn
-      } : coverPageMemory;
+      // Use coverPageMemory as the primary source since Supabase table might not exist
+      const coverPage = (coverRes.error || !coverRes.data?.[0]) ? coverPageMemory : {
+        imageSrc: coverRes.data[0].image_src || coverPageMemory.imageSrc,
+        imageHeight: coverRes.data[0].image_height || coverPageMemory.imageHeight,
+        titleEs: coverRes.data[0].title_es || coverPageMemory.titleEs,
+        titleEn: coverRes.data[0].title_en || coverPageMemory.titleEn,
+        subtitleEs: coverRes.data[0].subtitle_es || coverPageMemory.subtitleEs,
+        subtitleEn: coverRes.data[0].subtitle_en || coverPageMemory.subtitleEn
+      };
 
       return { menuItems, galleryItems, generalInfo, coverPage };
     } catch (err) {
@@ -105,7 +106,7 @@ async function startServer() {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
         generalInfo: initialGeneralInfo,
-        coverPage: initialCoverPage
+        coverPage: coverPageMemory
       };
     }
   };

@@ -1352,10 +1352,10 @@ export default function App() {
                             </h3>
                           </div>
 
-                          {/* Image Upload */}
+                          {/* Image URL Input */}
                           <div className="space-y-2">
                             <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Imagen de Fondo' : 'Background Image'}
+                              {lang === 'es' ? 'URL de Imagen de Fondo' : 'Background Image URL'}
                             </label>
 
                             {/* Current Image Preview */}
@@ -1365,59 +1365,40 @@ export default function App() {
                                   src={state.coverPage.imageSrc}
                                   alt="Preview"
                                   className="w-full h-32 object-cover"
+                                  onError={(e) => {
+                                    (e.target as any).src = 'https://via.placeholder.com/300x150?text=Imagen+no+valida';
+                                  }}
                                 />
                               </div>
                             )}
 
-                            {/* Upload Area */}
-                            <div
-                              className="border-2 border-dashed border-stone-300 rounded p-4 text-center bg-stone-50 cursor-pointer hover:border-editorial-red hover:bg-red-50 transition-all"
-                              onClick={() => coverImageInputRef.current?.click()}
-                            >
-                              <input
-                                ref={coverImageInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (event) => {
-                                      const base64 = event.target?.result as string;
-                                      const newCoverPage = { ...state.coverPage, imageSrc: base64 };
-                                      setState({ ...state, coverPage: newCoverPage });
-                                      saveStateToServer({ ...state, coverPage: newCoverPage });
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                                className="hidden"
-                              />
-                              <Upload className="w-6 h-6 text-stone-400 mx-auto mb-2" />
-                              <p className="text-[11px] uppercase tracking-wider font-semibold text-stone-600 mb-1">
-                                {lang === 'es' ? 'Haz click o arrastra imagen' : 'Click or drag image'}
-                              </p>
-                              <p className="text-[9px] text-stone-500">
-                                {lang === 'es' ? 'JPG, PNG, WebP' : 'JPG, PNG, WebP'}
-                              </p>
-                            </div>
+                            {/* URL Input */}
+                            <input
+                              type="text"
+                              placeholder={lang === 'es' ? 'Pega la URL de una imagen (https://...)' : 'Paste image URL (https://...)'}
+                              value={state.coverPage.imageSrc}
+                              onChange={(e) => {
+                                const newCoverPage = { ...state.coverPage, imageSrc: e.target.value };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red font-mono"
+                            />
 
                             {/* Clear Button */}
-                            {state.coverPage.imageSrc && (
-                              <button
-                                onClick={() => {
-                                  const newCoverPage = {
-                                    ...state.coverPage,
-                                    imageSrc: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1200'
-                                  };
-                                  setState({ ...state, coverPage: newCoverPage });
-                                  saveStateToServer({ ...state, coverPage: newCoverPage });
-                                }}
-                                className="w-full px-3 py-2 bg-red-50 border border-red-200 text-[10px] uppercase tracking-widest font-semibold text-red-700 hover:bg-red-100 transition-all"
-                              >
-                                {lang === 'es' ? 'Restablecer imagen predeterminada' : 'Reset to default image'}
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                const newCoverPage = {
+                                  ...state.coverPage,
+                                  imageSrc: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1200'
+                                };
+                                setState({ ...state, coverPage: newCoverPage });
+                                saveStateToServer({ ...state, coverPage: newCoverPage });
+                              }}
+                              className="w-full px-3 py-2 bg-red-50 border border-red-200 text-[10px] uppercase tracking-widest font-semibold text-red-700 hover:bg-red-100 transition-all"
+                            >
+                              {lang === 'es' ? 'Restablecer imagen predeterminada' : 'Reset to default image'}
+                            </button>
                           </div>
 
                           {/* Image Height Control */}

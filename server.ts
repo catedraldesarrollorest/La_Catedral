@@ -36,6 +36,9 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+  // In-memory storage for coverPage as fallback
+  let coverPageMemory = { ...initialCoverPage };
+
   // Helper to fetch state from Supabase or fallback to initial data
   const fetchStateFromSupabase = async (): Promise<AppState> => {
     if (!supabase) {
@@ -93,7 +96,7 @@ async function startServer() {
         titleEn: coverRes.data[0].title_en || initialCoverPage.titleEn,
         subtitleEs: coverRes.data[0].subtitle_es || initialCoverPage.subtitleEs,
         subtitleEn: coverRes.data[0].subtitle_en || initialCoverPage.subtitleEn
-      } : initialCoverPage;
+      } : coverPageMemory;
 
       return { menuItems, galleryItems, generalInfo, coverPage };
     } catch (err) {
@@ -183,8 +186,10 @@ async function startServer() {
         await supabase.from('general_info').upsert(infoData);
       }
 
-      // Save cover page
+      // Save cover page (to memory, Supabase is optional)
       if (newState.coverPage) {
+        coverPageMemory = newState.coverPage;
+
         const coverData = {
           id: 'default',
           image_src: newState.coverPage.imageSrc,
@@ -195,7 +200,14 @@ async function startServer() {
           subtitle_en: newState.coverPage.subtitleEn
         };
 
-        await supabase.from('cover_page').upsert(coverData);
+        try {
+          const { error } = await supabase.from('cover_page').upsert(coverData);
+          if (error) {
+            console.warn('Cover page not saved to Supabase (table may not exist):', error.message);
+          }
+        } catch (err: any) {
+          console.warn('Cover page not saved to Supabase:', err.message);
+        }
       }
 
       const state = await fetchStateFromSupabase();

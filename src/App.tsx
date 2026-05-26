@@ -2817,7 +2817,10 @@ export default function App() {
                     </button>
                     
                     <button
-                      onClick={() => setAdminOpen(false)}
+                      onClick={async () => {
+                        await fetchState();
+                        setAdminOpen(false);
+                      }}
                       type="button"
                       className="cursor-pointer bg-editorial-red hover:bg-editorial-dark text-white px-4 py-2 text-[9px] uppercase tracking-widest font-semibold transition-all"
                     >

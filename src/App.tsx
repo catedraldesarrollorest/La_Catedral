@@ -258,13 +258,20 @@ export default function App() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
 
-      setState({
+      // Merge with localStorage to preserve local edits
+      const savedState = localStorage.getItem('catedral_rest_state');
+      const localState = savedState ? JSON.parse(savedState) : null;
+
+      const mergedState = {
         menuItems: data.menuItems || [],
         galleryItems: data.galleryItems || [],
         generalInfo: data.generalInfo || initialGeneralInfo,
-        coverPage: data.coverPage || initialCoverPage
-      });
-      setEditedInfo(data.generalInfo || initialGeneralInfo);
+        coverPage: localState?.coverPage || data.coverPage || initialCoverPage
+      };
+
+      setState(mergedState);
+      localStorage.setItem('catedral_rest_state', JSON.stringify(mergedState));
+      setEditedInfo(mergedState.generalInfo);
       setError(null);
       setIsLocalMode(false);
     } catch (err: any) {

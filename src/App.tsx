@@ -795,15 +795,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* CTA Button */}
-                <div className="pt-4">
-                  <a
-                    href="#menu"
-                    className="inline-block bg-editorial-dark text-white hover:bg-editorial-red px-10 py-4 text-[10px] uppercase tracking-[0.25em] font-semibold transition-all shadow-lg"
-                  >
-                    {lang === 'es' ? 'Explorar la Carta' : 'Explore the Menu'}
-                  </a>
-                </div>
               </div>
             </div>
           </section>

@@ -2831,7 +2831,10 @@ export default function App() {
                     
                     <button
                       onClick={async () => {
-                        await fetchState();
+                        if (state) {
+                          await saveStateToServer(state, 'Cambios guardados. Volviendo a la web...');
+                          await new Promise(resolve => setTimeout(resolve, 500));
+                        }
                         setAdminOpen(false);
                       }}
                       type="button"

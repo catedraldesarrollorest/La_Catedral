@@ -734,87 +734,76 @@ export default function App() {
         <main className="flex-1 mt-26">
 
           {/* 1. HERO MAIN EDITORIAL PRESENTATION */}
-          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden" style={{
-            backgroundImage: `url(${state?.coverPage.imageSrc})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}>
-            <div className="absolute inset-0 bg-white/70"></div>
-            <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 40px, #000 40px, #000 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, #000 40px, #000 41px)'
-            }}></div>
-            
-            <div className="max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-              {/* Left text column */}
-              <div className="lg:col-span-7 flex flex-col justify-center space-y-8">
-                <div className="space-y-3">
-                  <span className="text-[11px] uppercase tracking-[0.4em] text-stone-400 font-semibold block">
-                    {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
-                  </span>
+          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden bg-[#F5F1EB]">
+            <div className="max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-24 flex flex-col items-center text-center space-y-8">
 
-                  {/* Logo in Hero Section */}
-                  <div className="flex items-center justify-start mb-4">
-                    <img
-                      src="/logo.png"
-                      alt="La Catedral Logo"
-                      className="h-20 sm:h-32 w-auto object-contain"
-                    />
-                  </div>
-
-                  <h1 className="text-6xl sm:text-8xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
-                    {lang === 'es' ? state?.coverPage.titleEs : state?.coverPage.titleEn}
-                  </h1>
-                </div>
-
-                <div className="space-y-4 max-w-xl">
-                  <p className="font-serif italic text-2xl sm:text-3xl text-editorial-red leading-snug">
-                    "{lang === 'es' ? state?.coverPage.subtitleEs : state?.coverPage.subtitleEn}"
-                  </p>
-                  
-                  {/* Active schedule displayed elegantly */}
-                  <div className="flex items-start gap-3 pt-3 border-t border-stone-200">
-                    <Clock className="w-4 h-4 text-editorial-red mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs uppercase tracking-widest font-semibold text-editorial-dark mb-1">
-                        {lang === 'es' ? 'Horario de Servicios' : 'Open Daily'}
-                      </p>
-                      <p className="text-xs text-stone-600 font-normal">
-                        {lang === 'es' ? state?.generalInfo.scheduleEs : state?.generalInfo.scheduleEn}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <a 
-                    href="#menu" 
-                    className="inline-block bg-editorial-dark text-white hover:bg-editorial-red px-10 py-4 text-[10px] uppercase tracking-[0.25em] font-semibold transition-all shadow-lg"
-                  >
-                    {lang === 'es' ? 'Explorar la Carta' : 'Explore the Menu'}
-                  </a>
-                </div>
-              </div>
-
-              {/* Right column - Main Editorial Graphic showcase (Feature image from El Local category) */}
-              <div className="lg:col-span-5 relative">
-                <div className="border border-editorial-dark/10 p-4 bg-white shadow-xl relative z-10">
+              {/* Restaurant Photo - Top */}
+              <div className="max-w-md mx-auto w-full">
+                <div className="border border-editorial-dark/10 p-4 bg-white shadow-xl">
                   <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                     {state?.galleryItems.filter(item => item.category === 'local')[0] ? (
-                      <img 
-                        src={state.galleryItems.filter(item => item.category === 'local')[0].imageSrc} 
-                        alt="Restaurante La Catedral" 
+                      <img
+                        src={state.galleryItems.filter(item => item.category === 'local')[0].imageSrc}
+                        alt="Restaurante La Catedral"
                         className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-400 p-8 text-center">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-400 p-8">
                         <ImageIcon className="w-12 h-12 stroke-[1] mb-2 text-stone-300" />
                         <span className="text-[10px] uppercase tracking-widest">Atmósfera Catedral</span>
                       </div>
                     )}
                   </div>
                 </div>
-                {/* Visual backframe matching the editorial guidelines */}
-                <div className="absolute -bottom-6 -right-6 w-full h-full bg-[#EFECE5] border border-editorial-dark/5 -z-10"></div>
+              </div>
+
+              {/* Content Below Photo */}
+              <div className="space-y-6 max-w-2xl w-full">
+                <span className="text-[11px] uppercase tracking-[0.4em] text-stone-400 font-semibold block">
+                  {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
+                </span>
+
+                {/* Logo */}
+                <div className="flex items-center justify-center">
+                  <img
+                    src="/logo.png"
+                    alt="La Catedral Logo"
+                    className="h-20 sm:h-24 w-auto object-contain"
+                  />
+                </div>
+
+                {/* Title */}
+                <h1 className="text-5xl sm:text-7xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
+                  {lang === 'es' ? state?.coverPage.titleEs : state?.coverPage.titleEn}
+                </h1>
+
+                {/* Subtitle */}
+                <p className="font-serif italic text-lg sm:text-2xl text-editorial-red leading-snug">
+                  "{lang === 'es' ? state?.coverPage.subtitleEs : state?.coverPage.subtitleEn}"
+                </p>
+
+                {/* Schedule */}
+                <div className="flex items-center justify-center gap-3 pt-8 border-t border-stone-200 inline-flex mx-auto">
+                  <Clock className="w-4 h-4 text-editorial-red shrink-0" />
+                  <div className="text-center">
+                    <p className="text-xs uppercase tracking-widest font-semibold text-editorial-dark mb-1">
+                      {lang === 'es' ? 'Horario de Servicios' : 'Open Daily'}
+                    </p>
+                    <p className="text-xs text-stone-600 font-normal">
+                      {lang === 'es' ? state?.generalInfo.scheduleEs : state?.generalInfo.scheduleEn}
+                    </p>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <div className="pt-4">
+                  <a
+                    href="#menu"
+                    className="inline-block bg-editorial-dark text-white hover:bg-editorial-red px-10 py-4 text-[10px] uppercase tracking-[0.25em] font-semibold transition-all shadow-lg"
+                  >
+                    {lang === 'es' ? 'Explorar la Carta' : 'Explore the Menu'}
+                  </a>
+                </div>
               </div>
             </div>
           </section>

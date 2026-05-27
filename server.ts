@@ -96,7 +96,10 @@ async function startServer() {
         titleEs: coverRes.data[0].title_es || coverPageMemory.titleEs,
         titleEn: coverRes.data[0].title_en || coverPageMemory.titleEn,
         subtitleEs: coverRes.data[0].subtitle_es || coverPageMemory.subtitleEs,
-        subtitleEn: coverRes.data[0].subtitle_en || coverPageMemory.subtitleEn
+        subtitleEn: coverRes.data[0].subtitle_en || coverPageMemory.subtitleEn,
+        galleryPhoto1: coverRes.data[0].gallery_photo_1 || coverPageMemory.galleryPhoto1,
+        galleryPhoto2: coverRes.data[0].gallery_photo_2 || coverPageMemory.galleryPhoto2,
+        galleryPhoto3: coverRes.data[0].gallery_photo_3 || coverPageMemory.galleryPhoto3
       };
 
       return { menuItems, galleryItems, generalInfo, coverPage };
@@ -198,7 +201,10 @@ async function startServer() {
           title_es: newState.coverPage.titleEs,
           title_en: newState.coverPage.titleEn,
           subtitle_es: newState.coverPage.subtitleEs,
-          subtitle_en: newState.coverPage.subtitleEn
+          subtitle_en: newState.coverPage.subtitleEn,
+          gallery_photo_1: newState.coverPage.galleryPhoto1,
+          gallery_photo_2: newState.coverPage.galleryPhoto2,
+          gallery_photo_3: newState.coverPage.galleryPhoto3
         };
 
         try {
@@ -278,7 +284,10 @@ async function startServer() {
         title_es: initialCoverPage.titleEs,
         title_en: initialCoverPage.titleEn,
         subtitle_es: initialCoverPage.subtitleEs,
-        subtitle_en: initialCoverPage.subtitleEn
+        subtitle_en: initialCoverPage.subtitleEn,
+        gallery_photo_1: initialCoverPage.galleryPhoto1,
+        gallery_photo_2: initialCoverPage.galleryPhoto2,
+        gallery_photo_3: initialCoverPage.galleryPhoto3
       };
 
       await supabase.from('cover_page').upsert(coverData);

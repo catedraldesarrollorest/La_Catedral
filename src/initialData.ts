@@ -515,5 +515,8 @@ export const initialCoverPage: CoverPage = {
   titleEs: 'La Catedral',
   titleEn: 'La Catedral',
   subtitleEs: 'Restaurante Cubano Auténtico',
-  subtitleEn: 'Authentic Cuban Restaurant'
+  subtitleEn: 'Authentic Cuban Restaurant',
+  galleryPhoto1: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=400',
+  galleryPhoto2: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=400',
+  galleryPhoto3: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=400'
 };

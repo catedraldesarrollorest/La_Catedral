@@ -41,6 +41,9 @@ export interface CoverPage {
   titleEn: string;
   subtitleEs: string;
   subtitleEn: string;
+  galleryPhoto1: string; // Base64 or URL for first gallery photo
+  galleryPhoto2: string; // Base64 or URL for second gallery photo
+  galleryPhoto3: string; // Base64 or URL for third gallery photo
 }
 
 export interface AppState {

@@ -777,10 +777,20 @@ export default function App() {
                   {lang === 'es' ? state?.coverPage.titleEs : state?.coverPage.titleEn}
                 </h1>
 
-                {/* Subtitle */}
-                <p className="font-serif italic text-lg sm:text-2xl text-editorial-red leading-snug">
-                  "{lang === 'es' ? state?.coverPage.subtitleEs : state?.coverPage.subtitleEn}"
-                </p>
+                {/* Gallery Photos */}
+                <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
+                  {[state?.coverPage.galleryPhoto1, state?.coverPage.galleryPhoto2, state?.coverPage.galleryPhoto3].map((photo, idx) => (
+                    <div key={idx} className="border border-stone-300 bg-stone-100 overflow-hidden aspect-square">
+                      {photo && (
+                        <img
+                          src={photo}
+                          alt={`Gallery ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {/* Schedule */}
                 <div className="flex items-center justify-center gap-3 pt-8 border-t border-stone-200 inline-flex mx-auto">
@@ -1471,6 +1481,56 @@ export default function App() {
                             <div className="text-[11px] text-stone-500 text-center">
                               {lang === 'es' ? 'Rango: 100px - 600px' : 'Range: 100px - 600px'}
                             </div>
+                          </div>
+
+                          {/* Gallery Photos Section */}
+                          <div className="space-y-3 pt-4 border-t border-stone-200">
+                            <h4 className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                              {lang === 'es' ? 'Fotos de Galería (3 imágenes)' : 'Gallery Photos (3 images)'}
+                            </h4>
+
+                            {[
+                              { key: 'galleryPhoto1', label: '1' },
+                              { key: 'galleryPhoto2', label: '2' },
+                              { key: 'galleryPhoto3', label: '3' }
+                            ].map(({ key, label }) => (
+                              <div key={key} className="space-y-2">
+                                <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
+                                  {lang === 'es' ? `Foto ${label}` : `Photo ${label}`}
+                                </label>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && state) {
+                                      const reader = new FileReader();
+                                      reader.onload = (evt) => {
+                                        if (evt.target?.result && state.coverPage) {
+                                          const newCoverPage = {
+                                            ...state.coverPage,
+                                            [key]: evt.target.result as string
+                                          };
+                                          setState({ ...state, coverPage: newCoverPage });
+                                          saveStateToServer({ ...state, coverPage: newCoverPage });
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="w-full border border-stone-300 rounded p-2 text-xs focus:outline-none focus:border-editorial-red"
+                                />
+                                {state.coverPage[key as keyof typeof state.coverPage] && (
+                                  <div className="border border-stone-200 overflow-hidden rounded bg-stone-50">
+                                    <img
+                                      src={state.coverPage[key as keyof typeof state.coverPage] as string}
+                                      alt={`Gallery ${label}`}
+                                      className="w-full h-24 object-cover"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
 
                           {/* Title Spanish */}

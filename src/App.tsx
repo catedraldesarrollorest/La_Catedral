@@ -262,11 +262,20 @@ export default function App() {
       const savedState = localStorage.getItem('catedral_rest_state');
       const localState = savedState ? JSON.parse(savedState) : null;
 
+      // Merge coverPage with defaults to ensure all fields exist
+      const serverCoverPage = data.coverPage || initialCoverPage;
+      const localCoverPage = localState?.coverPage || {};
+      const mergedCoverPage = {
+        ...initialCoverPage,
+        ...serverCoverPage,
+        ...(localState ? localCoverPage : {})
+      };
+
       const mergedState = {
         menuItems: data.menuItems || [],
         galleryItems: data.galleryItems || [],
         generalInfo: data.generalInfo || initialGeneralInfo,
-        coverPage: localState?.coverPage || data.coverPage || initialCoverPage
+        coverPage: mergedCoverPage
       };
 
       setState(mergedState);
@@ -282,8 +291,17 @@ export default function App() {
       if (localDataStr) {
         try {
           const localData: AppState = JSON.parse(localDataStr);
-          setState(localData);
-          setEditedInfo(localData.generalInfo);
+          // Ensure coverPage has all fields
+          const completeCoverPage = {
+            ...initialCoverPage,
+            ...localData.coverPage
+          };
+          const completeState = {
+            ...localData,
+            coverPage: completeCoverPage
+          };
+          setState(completeState);
+          setEditedInfo(completeState.generalInfo);
           setError(null);
           return;
         } catch (parseErr) {

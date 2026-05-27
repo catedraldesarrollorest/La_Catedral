@@ -1334,11 +1334,11 @@ export default function App() {
                             </div>
 
                             <div>
-                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                              <label className="text-sm font-bold text-stone-700 block mb-3">
                                 {lang === 'es' ? 'Altura de Imagen (px)' : 'Image Height (px)'}
                               </label>
                               <input
-                                type="number"
+                                type="range"
                                 min="100"
                                 max="600"
                                 value={state.coverPage?.imageHeight || 250}
@@ -1348,8 +1348,52 @@ export default function App() {
                                     saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
                                   }
                                 }}
-                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                                className="w-full h-2 bg-stone-300 rounded appearance-none cursor-pointer accent-editorial-red mb-3"
                               />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.max(100, state.coverPage.imageHeight - 10);
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                    }
+                                  }}
+                                  className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                                >
+                                  −
+                                </button>
+                                <input
+                                  type="number"
+                                  min="100"
+                                  max="600"
+                                  value={state.coverPage?.imageHeight || 250}
+                                  onChange={(e) => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.max(100, Math.min(600, parseInt(e.target.value) || 250));
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                    }
+                                  }}
+                                  className="flex-1 border border-stone-300 rounded p-3 text-sm text-center font-semibold focus:outline-none focus:border-editorial-red"
+                                />
+                                <span className="text-sm font-semibold text-stone-600 whitespace-nowrap">px</span>
+                                <button
+                                  onClick={() => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.min(600, state.coverPage.imageHeight + 10);
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                    }
+                                  }}
+                                  className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <div className="text-xs text-stone-500 text-center mt-2">
+                                {lang === 'es' ? 'Rango: 100px - 600px' : 'Range: 100px - 600px'}
+                              </div>
                             </div>
 
                             {/* Spanish Title */}

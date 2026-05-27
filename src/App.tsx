@@ -1552,24 +1552,60 @@ export default function App() {
                         </div>
 
                         {/* Right: Live Preview */}
-                        <div className="space-y-2">
-                          <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest mb-4 text-editorial-dark">
-                            {lang === 'es' ? 'Vista Previa' : 'Preview'}
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest text-editorial-dark">
+                            {lang === 'es' ? 'Vista Previa' : 'Live Preview'}
                           </h3>
-                          <div
-                            className="w-full bg-cover bg-center border border-stone-300 flex flex-col items-center justify-center text-center"
-                            style={{
-                              backgroundImage: `url(${state.coverPage.imageSrc})`,
-                              height: `${state.coverPage.imageHeight}px`
-                            }}
-                          >
-                            <div className="bg-black/50 w-full h-full flex flex-col items-center justify-center">
-                              <h2 className="font-cinzel text-3xl font-bold text-white mb-4">
+                          <div className="bg-stone-100 rounded border border-stone-300 p-6 flex flex-col items-center justify-start min-h-[700px] overflow-y-auto space-y-6">
+                            {/* Photo Preview */}
+                            <div className="w-full max-w-xs">
+                              <div
+                                className="border border-stone-300 bg-white overflow-hidden flex items-center justify-center"
+                                style={{
+                                  aspectRatio: '3/4',
+                                  backgroundColor: '#F5F1EB'
+                                }}
+                              >
+                                {state.coverPage.imageSrc && (
+                                  <img
+                                    src={state.coverPage.imageSrc}
+                                    alt="Preview"
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Text Preview */}
+                            <div className="text-center space-y-4 w-full max-w-sm">
+                              <span className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold block">
+                                {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
+                              </span>
+
+                              <div className="h-16 flex items-center justify-center">
+                                <img
+                                  src="/logo.png"
+                                  alt="Logo"
+                                  className="h-14 w-auto object-contain"
+                                />
+                              </div>
+
+                              <h2 className="font-cinzel text-3xl font-bold text-editorial-dark leading-tight">
                                 {lang === 'es' ? state.coverPage.titleEs : state.coverPage.titleEn}
                               </h2>
-                              <p className="text-white text-sm font-light max-w-md">
-                                {lang === 'es' ? state.coverPage.subtitleEs : state.coverPage.subtitleEn}
+
+                              <p className="font-serif italic text-sm text-editorial-red leading-snug">
+                                "{lang === 'es' ? state.coverPage.subtitleEs : state.coverPage.subtitleEn}"
                               </p>
+
+                              <div className="pt-4 border-t border-stone-200 text-xs">
+                                <p className="uppercase tracking-widest font-semibold text-editorial-dark mb-1">
+                                  {lang === 'es' ? 'Horario' : 'Hours'}
+                                </p>
+                                <p className="text-stone-600 text-[11px]">
+                                  {lang === 'es' ? 'Lunes a Domingo 8:30 - 23:00' : 'Mon-Sun 8:30 AM - 11:00 PM'}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>

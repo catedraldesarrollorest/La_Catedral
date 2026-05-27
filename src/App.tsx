@@ -2820,15 +2820,6 @@ export default function App() {
                     🔒 {lang === 'es' ? 'Los datos se guardan de forma permanente e inmediata en el servidor.' : 'Server-persisted database engine.'}
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={resetStateToDefault}
-                      type="button"
-                      className="cursor-pointer border border-editorial-red/30 bg-white hover:bg-editorial-red/10 text-editorial-red/90 px-4 py-2 text-[9px] uppercase tracking-widest font-semibold flex items-center gap-1.5 transition-all"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>{lang === 'es' ? 'Valores de Fábrica' : 'Reset defaults'}</span>
-                    </button>
-                    
                     <button
                       onClick={async () => {
                         if (state) {

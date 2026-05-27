@@ -726,7 +726,7 @@ export default function App() {
                   </p>
                   
                   {/* Active schedule displayed elegantly */}
-                  <div className="flex items-start gap-3 pt-3 border-t border-stone-200">
+                  <div className="flex items-start gap-3 pt-12 border-t border-stone-200">
                     <Clock className="w-4 h-4 text-editorial-red mt-0.5 shrink-0" />
                     <div>
                       <p className="text-xs uppercase tracking-widest font-semibold text-editorial-dark mb-1">

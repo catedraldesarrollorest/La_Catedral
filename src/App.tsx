@@ -1511,8 +1511,9 @@ export default function App() {
                                             ...state.coverPage,
                                             [key]: evt.target.result as string
                                           };
-                                          setState({ ...state, coverPage: newCoverPage });
-                                          saveStateToServer({ ...state, coverPage: newCoverPage });
+                                          const updatedState = { ...state, coverPage: newCoverPage };
+                                          setState(updatedState);
+                                          saveStateToServer(updatedState);
                                         }
                                       };
                                       reader.readAsDataURL(file);

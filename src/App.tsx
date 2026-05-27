@@ -1338,15 +1338,20 @@ export default function App() {
 
                   {/* SUB PANEL: COVER PAGE EDITOR */}
                   {adminCategory === 'portada' && state && (
-                    <div className="p-4 sm:p-8 space-y-6">
+                    <div className="p-4 sm:p-8 space-y-8">
+                      <div>
+                        <h2 className="font-cinzel text-2xl font-bold text-editorial-dark mb-2">
+                          📘 {lang === 'es' ? 'Editor de Portada' : 'Cover Page Editor'}
+                        </h2>
+                        <p className="text-xs text-stone-500">
+                          {lang === 'es' ? 'Personaliza la imagen y textos que aparecen en la parte superior de tu sitio web.' : 'Customize the image and text displayed at the top of your website.'}
+                        </p>
+                      </div>
+
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Left: Form Inputs */}
-                        <div className="space-y-6">
+                        <div className="space-y-6 bg-white p-6 border border-stone-200 rounded">
                           <div>
-                            <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest mb-4 text-editorial-dark">
-                              {lang === 'es' ? 'Editar Portada' : 'Edit Cover Page'}
-                            </h3>
-                          </div>
 
                           {/* Image Upload */}
                           <div className="space-y-2">
@@ -1418,9 +1423,9 @@ export default function App() {
                           </div>
 
                           {/* Image Height Control */}
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Alto de la Imagen' : 'Image Height'} ({state.coverPage.imageHeight}px)
+                              {lang === 'es' ? 'Alto de la Imagen' : 'Image Height'}
                             </label>
                             <input
                               type="range"
@@ -1432,9 +1437,20 @@ export default function App() {
                                 setState({ ...state, coverPage: newCoverPage });
                                 saveStateToServer({ ...state, coverPage: newCoverPage });
                               }}
-                              className="w-full"
+                              className="w-full h-2 bg-stone-300 rounded appearance-none cursor-pointer accent-editorial-red"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  const height = Math.max(100, state.coverPage.imageHeight - 10);
+                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                  setState({ ...state, coverPage: newCoverPage });
+                                  saveStateToServer({ ...state, coverPage: newCoverPage });
+                                }}
+                                className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                              >
+                                −
+                              </button>
                               <input
                                 type="number"
                                 min="100"
@@ -1446,8 +1462,23 @@ export default function App() {
                                   setState({ ...state, coverPage: newCoverPage });
                                   saveStateToServer({ ...state, coverPage: newCoverPage });
                                 }}
-                                className="w-20 px-3 py-2 border border-stone-300 text-xs"
+                                className="flex-1 px-3 py-2 border border-stone-300 text-sm text-center font-semibold focus:outline-none focus:border-editorial-red"
                               />
+                              <span className="text-xs font-semibold text-stone-600 whitespace-nowrap">px</span>
+                              <button
+                                onClick={() => {
+                                  const height = Math.min(600, state.coverPage.imageHeight + 10);
+                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                  setState({ ...state, coverPage: newCoverPage });
+                                  saveStateToServer({ ...state, coverPage: newCoverPage });
+                                }}
+                                className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <div className="text-[11px] text-stone-500 text-center">
+                              {lang === 'es' ? 'Rango: 100px - 600px' : 'Range: 100px - 600px'}
                             </div>
                           </div>
 

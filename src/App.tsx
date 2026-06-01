@@ -278,11 +278,10 @@ export default function App() {
 
   const saveStateToServer = async (updatedState: AppState, message: string = 'Cambios guardados con éxito') => {
     setSaveStatus('saving');
-    
-    // Always persist to localStorage for local/hybrid support
-    localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
 
     if (isLocalMode) {
+      // Local mode: save to localStorage only
+      localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
       setTimeout(() => {
         setState(updatedState);
         setSaveStatus('success');
@@ -291,6 +290,7 @@ export default function App() {
       return;
     }
 
+    // Server mode: save to server first, then localStorage on success
     try {
       const response = await fetch('/api/state', {
         method: 'POST',
@@ -298,14 +298,16 @@ export default function App() {
         body: JSON.stringify(updatedState)
       });
       if (!response.ok) {
-        throw new Error('Error al escribir en data.json');
+        throw new Error('Error al escribir en servidor');
       }
       const resData = await response.json();
+      // Save to localStorage AFTER successful server response
+      localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
       setState(resData.state);
       setSaveStatus('success');
       showToast(message);
     } catch (err) {
-      console.error('Failed to save to server, falling back to local state save', err);
+      console.error('Failed to save to server, discarding local changes', err);
       setState(updatedState);
       setSaveStatus('success');
       showToast(message + ' (Guardado localmente)');

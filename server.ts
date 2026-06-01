@@ -90,6 +90,9 @@ async function startServer() {
       if (newState.generalInfo !== undefined) {
         appState.generalInfo = newState.generalInfo;
       }
+      if (newState.coverPage !== undefined) {
+        appState.coverPage = newState.coverPage;
+      }
 
       console.log(`💾 Synced: ${appState.menuItems.length} menu items`);
       res.json({ success: true, state: appState });

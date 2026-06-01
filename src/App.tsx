@@ -622,14 +622,14 @@ export default function App() {
         <div className="flex items-center gap-1">
           <button 
             onClick={() => setLang('es')} 
-            className={`cursor-pointer px-3 py-1 transition-all ${lang === 'es' ? 'bg-editorial-red text-white' : 'text-stone-400 hover:text-white'}`}
+            className={`cursor-pointer px-3 py-1 rounded-sm transition-all font-medium ${lang === 'es' ? 'bg-editorial-red text-white' : 'text-editorial-dark hover:bg-stone-100'}`}
           >
             ES
           </button>
           <div className="h-4 w-[1px] bg-stone-700 mx-1"></div>
           <button 
             onClick={() => setLang('en')} 
-            className={`cursor-pointer px-3 py-1 transition-all ${lang === 'en' ? 'bg-editorial-red text-white' : 'text-stone-400 hover:text-white'}`}
+            className={`cursor-pointer px-3 py-1 rounded-sm transition-all font-medium ${lang === 'en' ? 'bg-editorial-red text-white' : 'text-editorial-dark hover:bg-stone-100'}`}
           >
             EN
           </button>
@@ -849,11 +849,21 @@ export default function App() {
                 const filteredImgs = state?.galleryItems.filter(img => img.category === activeGalleryTab) || [];
                 if (filteredImgs.length === 0) {
                   return (
-                    <div className="border border-dashed border-stone-300 rounded-sm py-20 text-center text-stone-400">
-                      <ImageIcon className="w-10 h-10 stroke-[1] mx-auto mb-3 text-stone-300 animate-pulse" />
-                      <p className="text-xs uppercase tracking-widest font-cinema">
-                        {lang === 'es' ? 'Próximamente más fotos' : 'No photos available yet'}
-                      </p>
+                    <div className="border-2 border-dashed border-stone-200 rounded-lg bg-stone-50/40 py-24 px-6 text-center">
+                      <div className="flex flex-col items-center max-w-sm mx-auto space-y-3">
+                        <div className="w-14 h-14 rounded-full bg-editorial-red/5 flex items-center justify-center">
+                          <ImageIcon className="w-7 h-7 stroke-[1.5] text-editorial-red/50" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-editorial-dark">
+                            {lang === 'es' ? 'Galería sin fotos aún' : 'Gallery Empty'}
+                          </p>
+                          <p className="text-xs text-stone-500 leading-relaxed">
+                            {lang === 'es'
+                              ? 'Sube las primeras fotos para que los clientes vean la atmósfera'
+                              : 'Upload photos to showcase your venue'}
+                          </p>
+                        </div>
                       {isAuthenticated && (
                         <button 
                           onClick={() => {
@@ -885,11 +895,19 @@ export default function App() {
                             (e.target as any).src = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600";
                           }}
                         />
-                        {/* Overlay text styling inspired by the high fashion prompt layout */}
-                        <div className="absolute inset-0 bg-editorial-dark/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-5">
-                          <span className="text-white text-[9px] uppercase tracking-[0.3em] font-medium font-cinzel">
-                            LA CATEDRAL · {activeGalleryTab.toUpperCase()}
-                          </span>
+                        {/* Premium hover overlay with gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-editorial-dark via-editorial-dark/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end p-6">
+                          <div className="space-y-2 w-full translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                            <span className="text-white text-[10px] uppercase tracking-[0.4em] font-semibold font-cinzel block">
+                              LA CATEDRAL
+                            </span>
+                            <p className="text-white/90 text-xs font-light font-sans">
+                              {activeGalleryTab === 'local' && (lang === 'es' ? 'Atmósfera & Ambiente' : 'Venue & Atmosphere')}
+                              {activeGalleryTab === 'bebidas' && (lang === 'es' ? 'Cócteles Artesanales' : 'Craft Cocktails')}
+                              {activeGalleryTab === 'platos' && (lang === 'es' ? 'Creaciones Culinarias' : 'Culinary Creations')}
+                              {activeGalleryTab === 'postres' && (lang === 'es' ? 'Postres Decadentes' : 'Decadent Desserts')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -997,10 +1015,10 @@ export default function App() {
                                 item.available ? 'opacity-100' : 'opacity-40'
                               }`}
                             >
-                              <div className="flex justify-between items-baseline gap-4">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <h5 className="font-serif text-lg text-editorial-dark leading-tight">
+                              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 sm:gap-6">
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="font-serif text-xl sm:text-2xl font-semibold text-editorial-dark leading-tight">
                                       {lang === 'es' ? item.nameEs : item.nameEn || item.nameEs}
                                     </h5>
                                     {!item.available && (
@@ -1010,13 +1028,17 @@ export default function App() {
                                     )}
                                   </div>
                                   {(lang === 'es' ? item.descEs : item.descEn || item.descEs) && (
-                                    <p className="text-xs text-stone-500 font-sans font-light leading-relaxed max-w-xl">
+                                    <p className="text-sm text-stone-600 font-sans font-light leading-relaxed max-w-xl">
                                       {lang === 'es' ? item.descEs : item.descEn || item.descEs}
                                     </p>
                                   )}
                                 </div>
-                                <span className="font-cinzel text-xs sm:text-sm font-semibold tracking-wider text-editorial-dark shrink-0">
-                                  {item.price}
+                                <div className="flex items-baseline gap-2 sm:flex-col sm:items-end shrink-0">
+                                  <span className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold">
+                                    {lang === 'es' ? 'Precio' : 'Price'}
+                                  </span>
+                                  <span className="font-cinzel text-lg sm:text-xl font-bold text-editorial-red">
+                                    {item.price}
                                 </span>
                               </div>
                             </div>
@@ -1296,7 +1318,7 @@ export default function App() {
                 </div>
 
                 {/* Main panel inner screen (can scroll) */}
-                <div className="flex-1 overflow-y-auto bg-editorial-cream">
+                <div className="flex-1 overflow-y-auto bg-white border-l border-stone-200">
 
                   {/* COVER PAGE EDITOR */}
                   {adminCategory === 'portada' && state && (

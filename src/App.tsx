@@ -9,30 +9,171 @@ import {
   Clock, Check, X, Shield, RefreshCw, Upload,
   Save, Eye, EyeOff, MessageSquare, ChevronRight,
   ExternalLink, AlertCircle, Image as ImageIcon, ArrowLeft,
-  ChevronDown, Settings, FileText, Printer, ArrowUp, ArrowDown, Layers
+  ChevronDown, Settings
 } from 'lucide-react';
 import { MenuItem, GalleryItem, GeneralInfo, CoverPage, AppState } from './types.js';
 import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './initialData.js';
-import { supabase } from './supabaseClient.js';
 
-export interface MenuPageConfig {
-  id: string;
-  type: 'cover' | 'menu';
-  coverTitle: string;
-  coverSubtitle: string;
-  backgroundImage: string;
-  coverLogo?: string;
-  coverLogoSize?: number;
-  coverSecondaryText?: string;
-  coverSecondaryImage?: string;
-  showCoverTitle?: boolean;
-  showCoverSubtitle?: boolean;
-  bgOpacity: number;
-  categories: Array<'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>;
-  columns: 1 | 2;
-  fontSize: 'sm' | 'base' | 'lg';
-  hideDescriptions: boolean;
+// === VALIDATION & NORMALIZATION LAYER ===
+const normalizeMenuItem = (item: any): MenuItem => {
+  if (!item || typeof item !== 'object') {
+    throw new Error('Invalid item: not an object');
+  }
+  try {
+    return {
+      id: String(item.id || '').trim() || 'unknown-' + Date.now(),
+      category: item.category as any || 'bebidas',
+      subcategory: String(item.subcategory || '').trim() || 'General',
+      nameEs: String(item.nameEs || '').trim() || '[Sin nombre ES]',
+      nameEn: String(item.nameEn || '').trim() || '[No name EN]',
+      descEs: String(item.descEs || '').trim() || '',
+      descEn: String(item.descEn || '').trim() || '',
+      price: String(item.price || '').trim() || '0 CUP',
+      available: item.available === true || item.available === 1 || false
+    };
+  } catch (e) {
+    console.error('Error normalizing item:', e);
+    throw new Error(`Failed to normalize item: ${(e as any).message}`);
+  }
+};
+
+const validateMenuItem = (item: MenuItem): { valid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  if (!item.id) errors.push('Missing ID');
+  if (!item.category) errors.push('Missing category');
+  if (!item.nameEs) errors.push('Missing Spanish name');
+  if (!item.price) errors.push('Missing price');
+  return { valid: errors.length === 0, errors };
+};
+
+// === ERROR BOUNDARY COMPONENT ===
+// === ULTRA-SIMPLE EDIT FORM ===
+function SimpleEditForm({
+  item,
+  state,
+  onSave,
+  onCancel
+}: {
+  item: MenuItem
+  state: AppState | null
+  onSave: (newState: AppState) => void
+  onCancel: () => void
+}) {
+  if (!state) return <div>No state</div>;
+
+  return (
+    <div style={{ padding: '20px', background: '#fff', border: '1px solid #ddd' }}>
+      <h2 style={{ marginBottom: '20px' }}>{item.nameEs}</h2>
+
+      <div style={{ marginBottom: '15px' }}>
+        <label>Nombre (ES):</label><br />
+        <input
+          id="nameEs"
+          type="text"
+          defaultValue={item.nameEs}
+          style={{ width: '100%', padding: '8px', marginTop: '5px', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      <div style={{ marginBottom: '15px' }}>
+        <label>Precio:</label><br />
+        <input
+          id="price"
+          type="text"
+          defaultValue={item.price}
+          style={{ width: '100%', padding: '8px', marginTop: '5px', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          <input
+            id="available"
+            type="checkbox"
+            defaultChecked={item.available}
+          />
+          {' '}Disponible
+        </label>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button
+          onClick={() => {
+            try {
+              // Get form values
+              const nameEs = (document.getElementById('nameEs') as HTMLInputElement)?.value || item.nameEs;
+              const price = (document.getElementById('price') as HTMLInputElement)?.value || item.price;
+              const available = (document.getElementById('available') as HTMLInputElement)?.checked ?? item.available;
+
+              // Update item
+              const updatedItem = { ...item, nameEs, price, available };
+
+              // Update state
+              const updatedMenuItems = state.menuItems.map(i =>
+                i.id === item.id ? updatedItem : i
+              );
+              const newState = { ...state, menuItems: updatedMenuItems };
+
+              // Save
+              onSave(newState);
+            } catch (err) {
+              alert('Error: ' + (err as any).message);
+            }
+          }}
+          style={{ flex: 1, padding: '10px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}
+        >
+          Guardar
+        </button>
+        <button
+          onClick={onCancel}
+          style={{ padding: '10px 20px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
 }
+
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('React Error Boundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 bg-red-900 text-white p-8 flex flex-col justify-center items-center z-50">
+          <h1 className="text-4xl font-bold mb-4">⚠️ RENDER ERROR</h1>
+          <p className="text-xl mb-4 text-center max-w-2xl">{this.state.error?.message}</p>
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="bg-white text-red-900 px-6 py-3 font-bold rounded hover:bg-gray-200 transition"
+          >
+            RELOAD PAGE
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 
 export default function App() {
   // --- STATE ---
@@ -41,7 +182,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<'es' | 'en'>('es');
   const [isLocalMode, setIsLocalMode] = useState<boolean>(false);
-  const coverImageInputRef = useRef<HTMLInputElement>(null);
   
   // Client Tabs
   const [activeGalleryTab, setActiveGalleryTab] = useState<'local' | 'bebidas' | 'platos' | 'postres'>('local');
@@ -55,181 +195,21 @@ export default function App() {
   const DEFAULT_PIN = '1059';
 
   // Admin Dashboard States
-  const [adminCategory, setAdminCategory] = useState<'portada' | 'menu' | 'galeria' | 'general' | 'pdf'>('portada');
-  const [pdfPages, setPdfPages] = useState<MenuPageConfig[]>([
-    {
-      id: 'page-1',
-      type: 'cover',
-      coverTitle: 'LA CATEDRAL',
-      coverSubtitle: 'RESTAURANTE & BAR',
-      backgroundImage: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop',
-      coverLogo: '/logo.png',
-      coverLogoSize: 80,
-      coverSecondaryText: 'RESTAURANTE & BAR',
-      coverSecondaryImage: '',
-      showCoverTitle: false,
-      showCoverSubtitle: false,
-      bgOpacity: 0,
-      categories: [],
-      columns: 1,
-      fontSize: 'base',
-      hideDescriptions: false
-    },
-    {
-      id: 'page-2',
-      type: 'menu',
-      coverTitle: 'BEBIDAS Y TRAGOS',
-      coverSubtitle: 'Cócteles & Bebidas Refrescantes',
-      backgroundImage: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 15,
-      categories: ['bebidas'],
-      columns: 2,
-      fontSize: 'sm',
-      hideDescriptions: false
-    },
-    {
-      id: 'page-3',
-      type: 'menu',
-      coverTitle: 'ENTRANTES Y TAPAS',
-      coverSubtitle: 'Primeros & Apertivos',
-      backgroundImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 15,
-      categories: ['primeros'],
-      columns: 2,
-      fontSize: 'sm',
-      hideDescriptions: false
-    },
-    {
-      id: 'page-4',
-      type: 'menu',
-      coverTitle: 'PLATOS PRINCIPALES',
-      coverSubtitle: 'Especialidades de la Casa',
-      backgroundImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 15,
-      categories: ['principales'],
-      columns: 2,
-      fontSize: 'sm',
-      hideDescriptions: false
-    },
-    {
-      id: 'page-5',
-      type: 'menu',
-      coverTitle: 'POSTRES DULCES',
-      coverSubtitle: 'Tentaciones Artesanales',
-      backgroundImage: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 12,
-      categories: ['postres'],
-      columns: 1,
-      fontSize: 'base',
-      hideDescriptions: false
-    },
-    {
-      id: 'page-6',
-      type: 'menu',
-      coverTitle: 'LICORES Y BODEGA',
-      coverSubtitle: 'Selección de Espirituosos',
-      backgroundImage: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 12,
-      categories: ['espirituosos'],
-      columns: 1,
-      fontSize: 'base',
-      hideDescriptions: false
-    }
-  ]);
-  const [selectedPdfPageId, setSelectedPdfPageId] = useState<string>('page-1');
-  const [pagesToPrint, setPagesToPrint] = useState<Set<string>>(new Set(pdfPages.map(p => p.id)));
-  const selectedPage = pdfPages.find(p => p.id === selectedPdfPageId) || pdfPages[0];
-  const selectedPageIndex = pdfPages.findIndex(p => p.id === selectedPdfPageId);
+  const [adminCategory, setAdminCategory] = useState<'portada' | 'menu' | 'galeria' | 'general'>('portada');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [toastMessage, setToastMessage] = useState<string>('');
-
-  // Load PDF pages configuration from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('pdfPagesConfig');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPdfPages(parsed);
-        }
-      }
-    } catch (err) {
-      console.error('Error loading PDF config from localStorage:', err);
-    }
-  }, []);
-
-  // Save PDF pages configuration to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('pdfPagesConfig', JSON.stringify(pdfPages));
-    } catch (err) {
-      console.error('Error saving PDF config to localStorage:', err);
-    }
-  }, [pdfPages]);
 
   // Menu management inside Admin
   const [menuFilter, setMenuFilter] = useState<string>('');
   const [menuEditCategory, setMenuEditCategory] = useState<'all' | 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos'>('all');
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [priceMultiplier, setPriceMultiplier] = useState<number>(1);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState<boolean>(false);
 
   // General setting inputs (temp until saved)
   const [editedInfo, setEditedInfo] = useState<GeneralInfo | null>(null);
-  const [editedCoverPage, setEditedCoverPage] = useState<CoverPage | null>(null);
 
-  // --- PDF Page Mutation Handlers ---
-  const movePageUp = (index: number) => {
-    if (index === 0) return;
-    const newPages = [...pdfPages];
-    const temp = newPages[index];
-    newPages[index] = newPages[index - 1];
-    newPages[index - 1] = temp;
-    setPdfPages(newPages);
-  };
-
-  const movePageDown = (index: number) => {
-    if (index === pdfPages.length - 1) return;
-    const newPages = [...pdfPages];
-    const temp = newPages[index];
-    newPages[index] = newPages[index + 1];
-    newPages[index + 1] = temp;
-    setPdfPages(newPages);
-  };
-
-  const deletePage = (id: string) => {
-    if (pdfPages.length <= 1) {
-      alert('Debe conservar al menos una página en el documento.');
-      return;
-    }
-    const newPages = pdfPages.filter(p => p.id !== id);
-    setPdfPages(newPages);
-    if (selectedPdfPageId === id) {
-      setSelectedPdfPageId(newPages[0].id);
-    }
-  };
-
-  const addPage = () => {
-    const newId = `page-${Date.now()}`;
-    const newPage: MenuPageConfig = {
-      id: newId,
-      type: 'menu',
-      coverTitle: 'NUEVA SECCIÓN',
-      coverSubtitle: 'Escribe una descripción breve',
-      backgroundImage: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1200&auto=format&fit=crop',
-      bgOpacity: 12,
-      categories: ['principales'],
-      columns: 1,
-      fontSize: 'base',
-      hideDescriptions: false
-    };
-    setPdfPages([...pdfPages, newPage]);
-    setSelectedPdfPageId(newId);
-  };
-
-  const updateSelectedPage = (fields: Partial<MenuPageConfig>) => {
-    setPdfPages(pdfPages.map(p => p.id === selectedPdfPageId ? { ...p, ...fields } : p));
-  };
 
   // Image upload helper reference
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -254,61 +234,34 @@ export default function App() {
   const fetchState = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/sync');
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
-
-      // Merge with localStorage to preserve local edits
-      const savedState = localStorage.getItem('catedral_rest_state');
-      const localState = savedState ? JSON.parse(savedState) : null;
-
-      // Merge coverPage with defaults to ensure all fields exist
-      const serverCoverPage = data.coverPage || initialCoverPage;
-      const localCoverPage = localState?.coverPage || {};
-      const mergedCoverPage = {
-        ...initialCoverPage,
-        ...serverCoverPage,
-        ...(localState ? localCoverPage : {})
-      };
-
-      const mergedState = {
-        menuItems: data.menuItems || [],
-        galleryItems: data.galleryItems || [],
-        generalInfo: data.generalInfo || initialGeneralInfo,
-        coverPage: mergedCoverPage
-      };
-
-      setState(mergedState);
-      localStorage.setItem('catedral_rest_state', JSON.stringify(mergedState));
-      setEditedInfo(mergedState.generalInfo);
+      const response = await fetch('/api/state');
+      if (!response.ok) {
+        throw new Error('API returned non-ok response.');
+      }
+      const data: AppState = await response.json();
+      setState(data);
+      setEditedInfo(data.generalInfo);
       setError(null);
       setIsLocalMode(false);
     } catch (err: any) {
-      console.warn('Backend not available, using localStorage', err);
+      console.warn('Backend API not available, falling back to LocalStorage Mode.', err);
       setIsLocalMode(true);
-
+      
+      // Attempt to load from local storage
       const localDataStr = localStorage.getItem('catedral_rest_state');
       if (localDataStr) {
         try {
           const localData: AppState = JSON.parse(localDataStr);
-          // Ensure coverPage has all fields
-          const completeCoverPage = {
-            ...initialCoverPage,
-            ...localData.coverPage
-          };
-          const completeState = {
-            ...localData,
-            coverPage: completeCoverPage
-          };
-          setState(completeState);
-          setEditedInfo(completeState.generalInfo);
+          setState(localData);
+          setEditedInfo(localData.generalInfo);
           setError(null);
           return;
         } catch (parseErr) {
-          console.error('Error parsing localStorage', parseErr);
+          console.error('Error parsing localStorage state', parseErr);
         }
       }
-
+      
+      // Fallback to initial default data
       const defaultState: AppState = {
         menuItems: initialMenuItems,
         galleryItems: initialGalleryItems,
@@ -325,9 +278,10 @@ export default function App() {
 
   const saveStateToServer = async (updatedState: AppState, message: string = 'Cambios guardados con éxito') => {
     setSaveStatus('saving');
-    localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
 
     if (isLocalMode) {
+      // Local mode: save to localStorage only
+      localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
       setTimeout(() => {
         setState(updatedState);
         setSaveStatus('success');
@@ -336,19 +290,24 @@ export default function App() {
       return;
     }
 
+    // Server mode: save to server first, then localStorage on success
     try {
-      const response = await fetch('/api/sync', {
+      const response = await fetch('/api/state', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedState)
       });
-
-      if (!response.ok) throw new Error('Failed to save');
-      setState(updatedState);
+      if (!response.ok) {
+        throw new Error('Error al escribir en servidor');
+      }
+      const resData = await response.json();
+      // Save to localStorage AFTER successful server response
+      localStorage.setItem('catedral_rest_state', JSON.stringify(updatedState));
+      setState(resData.state);
       setSaveStatus('success');
       showToast(message);
     } catch (err) {
-      console.error('Failed to save, using localStorage', err);
+      console.error('Failed to save to server, discarding local changes', err);
       setState(updatedState);
       setSaveStatus('success');
       showToast(message + ' (Guardado localmente)');
@@ -360,7 +319,7 @@ export default function App() {
       return;
     }
     setSaveStatus('saving');
-
+    
     const defaultState: AppState = {
       menuItems: initialMenuItems,
       galleryItems: initialGalleryItems,
@@ -375,7 +334,7 @@ export default function App() {
         setState(defaultState);
         setEditedInfo(initialGeneralInfo);
         setSaveStatus('success');
-        showToast('Se han reestablecido los datos originales (local).');
+        showToast('Se han reestablecido los datos originales del restaurante (local).');
         setIsAuthenticated(false);
         setAdminOpen(false);
       }, 300);
@@ -383,23 +342,19 @@ export default function App() {
     }
 
     try {
-      await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(defaultState)
-      });
-
-      setState(defaultState);
-      setEditedInfo(initialGeneralInfo);
+      const response = await fetch('/api/state/reset', { method: 'POST' });
+      const resData = await response.json();
+      setState(resData.state);
+      setEditedInfo(resData.state.generalInfo);
       setSaveStatus('success');
-      showToast('Se han reestablecido los datos originales.');
+      showToast('Se han reestablecido los datos originales del restaurante.');
       setIsAuthenticated(false);
       setAdminOpen(false);
     } catch (err) {
       setState(defaultState);
       setEditedInfo(initialGeneralInfo);
       setSaveStatus('success');
-      showToast('Se han reestablecido los datos (local).');
+      showToast('Se han reestablecido los datos del restaurante (local).');
       setIsAuthenticated(false);
       setAdminOpen(false);
     }
@@ -429,25 +384,15 @@ export default function App() {
     e.preventDefault();
     if (!state || !editingItem) return;
 
-    // Validate required fields
-    if (!editingItem?.nameEs.trim()) {
-      showToast('Por favor completa el nombre en español');
-      return;
-    }
-    if (!editingItem?.subcategory.trim()) {
-      showToast('Por favor completa la subcategoría');
-      return;
-    }
-
     let updatedMenuItems = [...state.menuItems];
-
+    
     if (isAddingNew) {
       // Add new
       updatedMenuItems.unshift(editingItem);
     } else {
       // Edit existing
-      updatedMenuItems = updatedMenuItems.map(item =>
-        item.id === editingItem?.id ? editingItem : item
+      updatedMenuItems = updatedMenuItems.map(item => 
+        item.id === editingItem.id ? editingItem : item
       );
     }
 
@@ -469,18 +414,33 @@ export default function App() {
     }
   };
 
+  const addDebugLog = (msg: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const fullMsg = `[${timestamp}] ${msg}`;
+    console.log(fullMsg);
+    setDebugLogs(prev => [...prev.slice(-9), fullMsg]);
+  };
+
   const handleToggleAvailability = (id: string) => {
-    if (!state) return;
-    const updatedMenuItems = state.menuItems.map(item => {
-      if (item.id === id) {
-        const nextVal = !item.available;
-        showToast(`${item.nameEs} ahora está ${nextVal ? 'Disponible' : 'Agotado'}`);
-        return { ...item, available: nextVal };
+    try {
+      if (!state) {
+        console.warn('State is null/undefined in handleToggleAvailability');
+        return;
       }
-      return item;
-    });
-    const updatedState = { ...state, menuItems: updatedMenuItems };
-    saveStateToServer(updatedState, 'Disponibilidad actualizada.');
+      const updatedMenuItems = state.menuItems.map(item => {
+        if (item.id === id) {
+          const nextVal = !item.available;
+          showToast(`${item.nameEs} ahora está ${nextVal ? 'Disponible' : 'Agotado'}`);
+          return { ...item, available: nextVal };
+        }
+        return item;
+      });
+      const updatedState = { ...state, menuItems: updatedMenuItems };
+      saveStateToServer(updatedState, 'Disponibilidad actualizada.');
+    } catch (err) {
+      console.error('Error in handleToggleAvailability:', err);
+      showToast('Error al cambiar disponibilidad');
+    }
   };
 
   const applyPriceMultiplier = (multiplier: number) => {
@@ -664,14 +624,14 @@ export default function App() {
         <div className="flex items-center gap-1">
           <button 
             onClick={() => setLang('es')} 
-            className={`cursor-pointer px-3 py-1 transition-all ${lang === 'es' ? 'bg-editorial-red text-white' : 'text-stone-400 hover:text-white'}`}
+            className={`cursor-pointer px-3 py-1 rounded-sm transition-all font-medium ${lang === 'es' ? 'bg-editorial-red text-white' : 'text-editorial-dark hover:bg-stone-100'}`}
           >
             ES
           </button>
           <div className="h-4 w-[1px] bg-stone-700 mx-1"></div>
           <button 
             onClick={() => setLang('en')} 
-            className={`cursor-pointer px-3 py-1 transition-all ${lang === 'en' ? 'bg-editorial-red text-white' : 'text-stone-400 hover:text-white'}`}
+            className={`cursor-pointer px-3 py-1 rounded-sm transition-all font-medium ${lang === 'en' ? 'bg-editorial-red text-white' : 'text-editorial-dark hover:bg-stone-100'}`}
           >
             EN
           </button>
@@ -701,22 +661,17 @@ export default function App() {
 
         {/* Elegant Center Emblem Logo (Secret Trigger) */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <button
-            onClick={() => setAdminOpen(true)}
-            className="cursor-pointer bg-transparent border-none outline-none transition-all p-0 hover:scale-110"
-            title="Portal"
-          >
-            <img
-              src="/logo.png"
-              alt="La Catedral Logo"
-              className="h-8 sm:h-10 w-auto object-contain"
-            />
-          </button>
-          <img
-            src="/nombre.svg"
-            alt="La Catedral"
-            className="h-10 sm:h-12 w-auto object-contain"
-          />
+          <div className="font-cinzel text-sm sm:text-lg font-bold tracking-[0.25em] flex items-center gap-2">
+            {/* The templar cross symbol opens the administration portal when clicked */}
+            <button 
+              onClick={() => setAdminOpen(true)}
+              className="text-editorial-red text-md sm:text-l leading-none hover:opacity-75 cursor-pointer bg-transparent border-none outline-none transition-all p-1"
+              title="Portal"
+            >
+              ✛
+            </button>
+            <span className="text-editorial-dark select-none">LA CATEDRAL</span>
+          </div>
         </div>
 
         {/* Desktop Right Nav Links */}
@@ -749,77 +704,81 @@ export default function App() {
         <main className="flex-1 mt-26">
 
           {/* 1. HERO MAIN EDITORIAL PRESENTATION */}
-          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden bg-[#F5F1EB]">
-            <div className="max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-24 flex flex-col items-center text-center space-y-8">
+          <section id="hero" className="relative border-b border-editorial-dark/15 overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 40px, #000 40px, #000 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, #000 40px, #000 41px)'
+            }}></div>
+            
+            <div className="max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+              {/* Left text column */}
+              <div className="lg:col-span-7 flex flex-col justify-center space-y-8">
+                <div className="space-y-3">
+                  <span className="text-[11px] uppercase tracking-[0.4em] text-stone-400 font-semibold block">
+                    {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
+                  </span>
+                  <h1 className="text-6xl sm:text-8xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
+                    LA <br className="hidden sm:inline" />
+                    CATEDRAL
+                  </h1>
+                </div>
 
-              {/* Restaurant Photo - Top */}
-              <div className="max-w-md mx-auto w-full">
-                <div className="border border-editorial-dark/10 p-4 bg-white shadow-xl">
+                <div className="space-y-4 max-w-xl">
+                  <p className="font-serif italic text-2xl sm:text-3xl text-editorial-red leading-snug">
+                    {lang === 'es' ? '“Rindiendo culto permanente a la buena mesa en La Habana”' : '“A permanent devotion to fine culinary art in Havana”'}
+                  </p>
+                  
+                  {/* Active schedule displayed elegantly */}
+                  <div className="flex items-start gap-3 pt-12 border-t border-stone-200">
+                    <Clock className="w-4 h-4 text-editorial-red mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs uppercase tracking-widest font-semibold text-editorial-dark mb-1">
+                        {lang === 'es' ? 'Horario de Servicios' : 'Open Daily'}
+                      </p>
+                      <p className="text-xs text-stone-600 font-normal">
+                        {lang === 'es' ? state?.generalInfo.scheduleEs : state?.generalInfo.scheduleEn}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <a 
+                    href="#menu" 
+                    className="inline-block bg-editorial-dark text-white hover:bg-editorial-red px-10 py-4 text-[10px] uppercase tracking-[0.25em] font-semibold transition-all shadow-lg"
+                  >
+                    {lang === 'es' ? 'Explorar la Carta' : 'Explore the Menu'}
+                  </a>
+                </div>
+              </div>
+
+              {/* Right column - Main Editorial Graphic showcase (Feature image from El Local category) */}
+              <div className="lg:col-span-5 relative">
+                <div className="border border-editorial-dark/10 p-4 bg-white shadow-xl relative z-10">
                   <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                     {state?.galleryItems.filter(item => item.category === 'local')[0] ? (
-                      <img
-                        src={state.galleryItems.filter(item => item.category === 'local')[0].imageSrc}
-                        alt="Restaurante La Catedral"
+                      <img 
+                        src={state.galleryItems.filter(item => item.category === 'local')[0].imageSrc} 
+                        alt="Restaurante La Catedral" 
                         className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-400 p-8">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-400 p-8 text-center">
                         <ImageIcon className="w-12 h-12 stroke-[1] mb-2 text-stone-300" />
                         <span className="text-[10px] uppercase tracking-widest">Atmósfera Catedral</span>
                       </div>
                     )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Below Photo */}
-              <div className="space-y-6 max-w-2xl w-full">
-                <span className="text-[11px] uppercase tracking-[0.4em] text-stone-400 font-semibold block">
-                  {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
-                </span>
-
-                {/* Logo */}
-                <div className="flex items-center justify-center">
-                  <img
-                    src="/logo.png"
-                    alt="La Catedral Logo"
-                    className="h-20 sm:h-24 w-auto object-contain"
-                  />
-                </div>
-
-                {/* Title */}
-                <h1 className="text-5xl sm:text-7xl font-cinzel font-semibold tracking-wide leading-none text-editorial-dark">
-                  {lang === 'es' ? state?.coverPage.titleEs : state?.coverPage.titleEn}
-                </h1>
-
-                {/* Gallery Photos */}
-                <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
-                  {[state?.coverPage.galleryPhoto1, state?.coverPage.galleryPhoto2, state?.coverPage.galleryPhoto3].map((photo, idx) => (
-                    <div key={idx} className="border border-stone-300 bg-stone-100 overflow-hidden aspect-square">
-                      {photo && (
-                        <img
-                          src={photo}
-                          alt={`Gallery ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                    <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/80 to-transparent p-6 text-white flex flex-col justify-end">
+                      <span className="text-[9px] uppercase tracking-[0.3em] font-semibold opacity-80 mb-1">
+                        {lang === 'es' ? 'Reservar mesa' : 'Book a table'}
+                      </span>
+                      <p className="font-cinzel text-md tracking-wider">
+                        {state?.generalInfo.phone}
+                      </p>
                     </div>
-                  ))}
-                </div>
-
-                {/* Schedule */}
-                <div className="flex items-center justify-center gap-3 pt-8 border-t border-stone-200 inline-flex mx-auto">
-                  <Clock className="w-4 h-4 text-editorial-red shrink-0" />
-                  <div className="text-center">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-editorial-dark mb-1">
-                      {lang === 'es' ? 'Horario de Servicios' : 'Open Daily'}
-                    </p>
-                    <p className="text-xs text-stone-600 font-normal">
-                      {lang === 'es' ? state?.generalInfo.scheduleEs : state?.generalInfo.scheduleEn}
-                    </p>
                   </div>
                 </div>
-
+                {/* Visual backframe matching the editorial guidelines */}
+                <div className="absolute -bottom-6 -right-6 w-full h-full bg-[#EFECE5] border border-editorial-dark/5 -z-10"></div>
               </div>
             </div>
           </section>
@@ -892,11 +851,21 @@ export default function App() {
                 const filteredImgs = state?.galleryItems.filter(img => img.category === activeGalleryTab) || [];
                 if (filteredImgs.length === 0) {
                   return (
-                    <div className="border border-dashed border-stone-300 rounded-sm py-20 text-center text-stone-400">
-                      <ImageIcon className="w-10 h-10 stroke-[1] mx-auto mb-3 text-stone-300 animate-pulse" />
-                      <p className="text-xs uppercase tracking-widest font-cinema">
-                        {lang === 'es' ? 'Próximamente más fotos' : 'No photos available yet'}
-                      </p>
+                    <div className="border-2 border-dashed border-stone-200 rounded-lg bg-stone-50/40 py-24 px-6 text-center">
+                      <div className="flex flex-col items-center max-w-sm mx-auto space-y-3">
+                        <div className="w-14 h-14 rounded-full bg-editorial-red/5 flex items-center justify-center">
+                          <ImageIcon className="w-7 h-7 stroke-[1.5] text-editorial-red/50" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-editorial-dark">
+                            {lang === 'es' ? 'Galería sin fotos aún' : 'Gallery Empty'}
+                          </p>
+                          <p className="text-xs text-stone-500 leading-relaxed">
+                            {lang === 'es'
+                              ? 'Sube las primeras fotos para que los clientes vean la atmósfera'
+                              : 'Upload photos to showcase your venue'}
+                          </p>
+                        </div>
                       {isAuthenticated && (
                         <button 
                           onClick={() => {
@@ -928,11 +897,19 @@ export default function App() {
                             (e.target as any).src = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600";
                           }}
                         />
-                        {/* Overlay text styling inspired by the high fashion prompt layout */}
-                        <div className="absolute inset-0 bg-editorial-dark/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-5">
-                          <span className="text-white text-[9px] uppercase tracking-[0.3em] font-medium font-cinzel">
-                            LA CATEDRAL · {activeGalleryTab.toUpperCase()}
-                          </span>
+                        {/* Premium hover overlay with gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-editorial-dark via-editorial-dark/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end p-6">
+                          <div className="space-y-2 w-full translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                            <span className="text-white text-[10px] uppercase tracking-[0.4em] font-semibold font-cinzel block">
+                              LA CATEDRAL
+                            </span>
+                            <p className="text-white/90 text-xs font-light font-sans">
+                              {activeGalleryTab === 'local' && (lang === 'es' ? 'Atmósfera & Ambiente' : 'Venue & Atmosphere')}
+                              {activeGalleryTab === 'bebidas' && (lang === 'es' ? 'Cócteles Artesanales' : 'Craft Cocktails')}
+                              {activeGalleryTab === 'platos' && (lang === 'es' ? 'Creaciones Culinarias' : 'Culinary Creations')}
+                              {activeGalleryTab === 'postres' && (lang === 'es' ? 'Postres Decadentes' : 'Decadent Desserts')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -947,7 +924,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-6 sm:px-12">
               <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
                 <span className="text-[11px] uppercase tracking-[0.4em] text-editorial-red font-semibold block">
-                  {lang === 'es' ? 'Menu' : 'Exclusive Menu'}
+                  {lang === 'es' ? 'La Carta' : 'Exclusive Menu'}
                 </span>
                 <h2 className="text-4xl sm:text-5xl font-cinzel text-editorial-dark font-light">
                   {lang === 'es' ? 'Rendir Culto al Buen Saborear' : 'A Rite of Gastronomy'}
@@ -1040,10 +1017,10 @@ export default function App() {
                                 item.available ? 'opacity-100' : 'opacity-40'
                               }`}
                             >
-                              <div className="flex justify-between items-baseline gap-4">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <h5 className="font-serif text-lg text-editorial-dark leading-tight">
+                              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 sm:gap-6">
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="font-serif text-xl sm:text-2xl font-semibold text-editorial-dark leading-tight">
                                       {lang === 'es' ? item.nameEs : item.nameEn || item.nameEs}
                                     </h5>
                                     {!item.available && (
@@ -1053,13 +1030,17 @@ export default function App() {
                                     )}
                                   </div>
                                   {(lang === 'es' ? item.descEs : item.descEn || item.descEs) && (
-                                    <p className="text-xs text-stone-500 font-sans font-light leading-relaxed max-w-xl">
+                                    <p className="text-sm text-stone-600 font-sans font-light leading-relaxed max-w-xl">
                                       {lang === 'es' ? item.descEs : item.descEn || item.descEs}
                                     </p>
                                   )}
                                 </div>
-                                <span className="font-cinzel text-xs sm:text-sm font-semibold tracking-wider text-editorial-dark shrink-0">
-                                  {item.price}
+                                <div className="flex items-baseline gap-2 sm:flex-col sm:items-end shrink-0">
+                                  <span className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold">
+                                    {lang === 'es' ? 'Precio' : 'Price'}
+                                  </span>
+                                  <span className="font-cinzel text-lg sm:text-xl font-bold text-editorial-red">
+                                    {item.price}
                                 </span>
                               </div>
                             </div>
@@ -1081,18 +1062,9 @@ export default function App() {
                 
                 {/* Left side general branding */}
                 <div className="lg:col-span-5 space-y-6">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/logo.png"
-                      alt="La Catedral Logo"
-                      className="h-8 w-auto object-contain"
-                    />
-                    <img
-                      src="/nombre.svg"
-                      alt="La Catedral"
-                      className="h-12 w-auto object-contain"
-                      style={{filter: 'invert(1) brightness(1.1)'}}
-                    />
+                  <div className="font-cinzel font-bold text-xl tracking-[0.25em] flex items-center gap-2">
+                    <span className="text-editorial-red text-2xl">✛</span>
+                    <span>LA CATEDRAL</span>
                   </div>
                   <p className="text-xs text-stone-400 font-light leading-relaxed max-w-md">
                     {lang === 'es' ? (
@@ -1125,6 +1097,17 @@ export default function App() {
                         <ExternalLink className="w-2.5 h-2.5" />
                         <span>Facebook</span>
                       </a>
+                      {state?.generalInfo.whatsappGroup && (
+                        <a 
+                          href={state?.generalInfo.whatsappGroup} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="bg-stone-800 hover:bg-emerald-600 text-stone-300 hover:text-white px-3 sm:px-4 py-1.5 text-[9px] uppercase tracking-wider font-semibold transition-all flex items-center gap-1.5"
+                        >
+                          <MessageSquare className="w-2.5 h-2.5 text-emerald-400" />
+                          <span>{lang === 'es' ? 'Grupo WhatsApp de Clientes' : 'WhatsApp Client Group'}</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1168,20 +1151,19 @@ export default function App() {
                       </a>
                     </p>
                     
-                      {state?.generalInfo.whatsappGroup && (
-                        <a
-                          href={state?.generalInfo.whatsappGroup}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1EBE57] text-white px-5 py-2.5 text-[9px] uppercase tracking-[0.15em] font-semibold transition-all shadow-md font-sans"
-                        >
-                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.852L.057 23.5l5.797-1.452A11.938 11.938 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.032-1.385l-.361-.214-3.44.862.878-3.351-.235-.374A9.808 9.808 0 012.182 12c0-5.419 4.399-9.818 9.818-9.818 5.419 0 9.818 4.399 9.818 9.818 0 5.419-4.399 9.818-9.818 9.818z"/>
-                          </svg>
-                          <span>{lang === 'es' ? 'NUESTRA COMUNIDAD' : 'OUR COMMUNITY'}</span>
-                        </a>
-                      )}
+                    {/* Floating WhatsApp reservation tool */}
+                    <a 
+                      href={`https://wa.me/${state?.generalInfo.whatsapp}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1EBE57] text-white px-5 py-2.5 text-[9px] uppercase tracking-[0.15em] font-semibold transition-all shadow-md font-sans"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.852L.057 23.5l5.797-1.452A11.938 11.938 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.032-1.385l-.361-.214-3.44.862.878-3.351-.235-.374A9.808 9.808 0 012.182 12c0-5.419 4.399-9.818 9.818-9.818 5.419 0 9.818 4.399 9.818 9.818 0 5.419-4.399 9.818-9.818 9.818z"/>
+                      </svg>
+                      <span>Reservar vía WhatsApp</span>
+                    </a>
                   </div>
 
                 </div>
@@ -1297,7 +1279,7 @@ export default function App() {
                       adminCategory === 'portada' ? 'border-editorial-red text-white' : 'border-transparent hover:text-white'
                     }`}
                   >
-                    📘 {lang === 'es' ? 'Portada' : 'Cover'}
+                    📘 {lang === 'es' ? 'Portada' : 'Cover Page'}
                   </button>
                   <button
                     onClick={() => {
@@ -1323,7 +1305,7 @@ export default function App() {
                   >
                     🖼️ {lang === 'es' ? 'Editar Fotos' : 'Manage Gallery'}
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       setAdminCategory('general');
                       setEditingItem(null);
@@ -1335,342 +1317,250 @@ export default function App() {
                   >
                     ⚙️ {lang === 'es' ? 'Contactos y Redes' : 'Contacts & Hours'}
                   </button>
-                  <button 
-                    onClick={() => {
-                      setAdminCategory('pdf');
-                      setEditingItem(null);
-                      setIsAddingNew(false);
-                    }}
-                    className={`cursor-pointer py-3.5 px-2 text-[10px] uppercase tracking-widest border-b-2 font-medium transition-all ${
-                      adminCategory === 'pdf' ? 'border-editorial-red text-white' : 'border-transparent hover:text-white'
-                    }`}
-                  >
-                    🖨️ {lang === 'es' ? 'Menú Impreso (PDF)' : 'Printed Menu (PDF)'}
-                  </button>
                 </div>
 
                 {/* Main panel inner screen (can scroll) */}
-                <div className="flex-1 overflow-y-auto bg-editorial-cream">
+                <div className="flex-1 overflow-y-auto bg-white border-l border-stone-200">
 
-                  {/* SUB PANEL: COVER PAGE EDITOR */}
+                  {/* COVER PAGE EDITOR */}
                   {adminCategory === 'portada' && state && (
                     <div className="p-4 sm:p-8 space-y-8">
                       <div>
-                        <h2 className="font-cinzel text-2xl font-bold text-editorial-dark mb-2">
+                        <h2 className="font-cinzel text-2xl font-bold text-editorial-dark mb-6">
                           📘 {lang === 'es' ? 'Editor de Portada' : 'Cover Page Editor'}
                         </h2>
-                        <p className="text-xs text-stone-500">
-                          {lang === 'es' ? 'Personaliza la imagen y textos que aparecen en la parte superior de tu sitio web.' : 'Customize the image and text displayed at the top of your website.'}
-                        </p>
-                      </div>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Left: Form Inputs */}
-                        <div className="space-y-6 bg-white p-6 border border-stone-200 rounded">
-                          <div>
-
-                          {/* Image Upload */}
-                          <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Imagen de Fondo' : 'Background Image'}
-                            </label>
-
-                            {/* Current Image Preview */}
-                            {state.coverPage.imageSrc && (
-                              <div className="mb-3 border border-stone-200 overflow-hidden bg-stone-50">
-                                <img
-                                  src={state.coverPage.imageSrc}
-                                  alt="Preview"
-                                  className="w-full h-32 object-cover"
-                                  onError={(e) => {
-                                    (e.target as any).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="150"%3E%3Crect fill="%23e5e5e5" width="300" height="150"/%3E%3C/svg%3E';
-                                  }}
-                                />
-                              </div>
-                            )}
-
-                            {/* Upload Area */}
-                            <div
-                              className="border-2 border-dashed border-stone-300 rounded p-4 text-center bg-stone-50 cursor-pointer hover:border-editorial-red hover:bg-red-50 transition-all"
-                              onClick={() => coverImageInputRef.current?.click()}
-                            >
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Left: Editor Controls */}
+                          <div className="space-y-6 bg-white p-6 border border-stone-200 rounded">
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Imagen de Portada' : 'Cover Image'}
+                              </label>
                               <input
-                                ref={coverImageInputRef}
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
-                                  if (file) {
+                                  if (file && state) {
                                     const reader = new FileReader();
-                                    reader.onload = (event) => {
-                                      const base64 = event.target?.result as string;
-                                      const newCoverPage = { ...state.coverPage, imageSrc: base64 };
-                                      setState({ ...state, coverPage: newCoverPage });
-                                      saveStateToServer({ ...state, coverPage: newCoverPage });
+                                    reader.onload = (evt) => {
+                                      if (evt.target?.result && state.coverPage) {
+                                        const newCoverPage = { ...state.coverPage, imageSrc: evt.target.result as string };
+                                        saveStateToServer({ ...state, coverPage: newCoverPage }, '📸 Imagen actualizada');
+                                      }
                                     };
                                     reader.readAsDataURL(file);
                                   }
                                 }}
-                                className="hidden"
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
                               />
-                              <Upload className="w-6 h-6 text-stone-400 mx-auto mb-2" />
-                              <p className="text-[11px] uppercase tracking-wider font-semibold text-stone-600 mb-1">
-                                {lang === 'es' ? 'Toca para elegir foto' : 'Tap to choose photo'}
-                              </p>
-                              <p className="text-[9px] text-stone-500">
-                                {lang === 'es' ? 'JPG, PNG, WebP' : 'JPG, PNG, WebP'}
-                              </p>
                             </div>
 
-                            {/* Clear Button */}
-                            <button
-                              onClick={() => {
-                                const newCoverPage = {
-                                  ...state.coverPage,
-                                  imageSrc: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1200'
-                                };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 bg-red-50 border border-red-200 text-[10px] uppercase tracking-widest font-semibold text-red-700 hover:bg-red-100 transition-all"
-                            >
-                              {lang === 'es' ? 'Restablecer imagen predeterminada' : 'Reset to default image'}
-                            </button>
-                          </div>
-
-                          {/* Image Height Control */}
-                          <div className="space-y-3">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Alto de la Imagen' : 'Image Height'}
-                            </label>
-                            <input
-                              type="range"
-                              min="100"
-                              max="600"
-                              value={state.coverPage.imageHeight}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, imageHeight: parseInt(e.target.value) };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full h-2 bg-stone-300 rounded appearance-none cursor-pointer accent-editorial-red"
-                            />
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => {
-                                  const height = Math.max(100, state.coverPage.imageHeight - 10);
-                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
-                                  setState({ ...state, coverPage: newCoverPage });
-                                  saveStateToServer({ ...state, coverPage: newCoverPage });
-                                }}
-                                className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
-                              >
-                                −
-                              </button>
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-3">
+                                {lang === 'es' ? 'Altura de Imagen (px)' : 'Image Height (px)'}
+                              </label>
                               <input
-                                type="number"
+                                type="range"
                                 min="100"
                                 max="600"
-                                value={state.coverPage.imageHeight}
+                                value={state.coverPage?.imageHeight || 250}
                                 onChange={(e) => {
-                                  const height = Math.max(100, Math.min(600, parseInt(e.target.value) || 250));
-                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
-                                  setState({ ...state, coverPage: newCoverPage });
-                                  saveStateToServer({ ...state, coverPage: newCoverPage });
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, imageHeight: parseInt(e.target.value) || 250 };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                  }
                                 }}
-                                className="flex-1 px-3 py-2 border border-stone-300 text-sm text-center font-semibold focus:outline-none focus:border-editorial-red"
+                                className="w-full h-2 bg-stone-300 rounded appearance-none cursor-pointer accent-editorial-red mb-3"
                               />
-                              <span className="text-xs font-semibold text-stone-600 whitespace-nowrap">px</span>
-                              <button
-                                onClick={() => {
-                                  const height = Math.min(600, state.coverPage.imageHeight + 10);
-                                  const newCoverPage = { ...state.coverPage, imageHeight: height };
-                                  setState({ ...state, coverPage: newCoverPage });
-                                  saveStateToServer({ ...state, coverPage: newCoverPage });
-                                }}
-                                className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <div className="text-[11px] text-stone-500 text-center">
-                              {lang === 'es' ? 'Rango: 100px - 600px' : 'Range: 100px - 600px'}
-                            </div>
-                          </div>
-
-                          {/* Gallery Photos Section */}
-                          <div className="space-y-3 pt-4 border-t border-stone-200">
-                            <h4 className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Fotos de Galería (3 imágenes)' : 'Gallery Photos (3 images)'}
-                            </h4>
-
-                            {[
-                              { key: 'galleryPhoto1', label: '1' },
-                              { key: 'galleryPhoto2', label: '2' },
-                              { key: 'galleryPhoto3', label: '3' }
-                            ].map(({ key, label }) => (
-                              <div key={key} className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                                  {lang === 'es' ? `Foto ${label}` : `Photo ${label}`}
-                                </label>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file && state) {
-                                      const reader = new FileReader();
-                                      reader.onload = (evt) => {
-                                        if (evt.target?.result && state.coverPage) {
-                                          const newCoverPage = {
-                                            ...state.coverPage,
-                                            [key]: evt.target.result as string
-                                          };
-                                          const updatedState = { ...state, coverPage: newCoverPage };
-                                          setState(updatedState);
-                                          saveStateToServer(updatedState);
-                                        }
-                                      };
-                                      reader.readAsDataURL(file);
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.max(100, state.coverPage.imageHeight - 10);
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
                                     }
                                   }}
-                                  className="w-full border border-stone-300 rounded p-2 text-xs focus:outline-none focus:border-editorial-red"
+                                  className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                                >
+                                  −
+                                </button>
+                                <input
+                                  type="number"
+                                  min="100"
+                                  max="600"
+                                  value={state.coverPage?.imageHeight || 250}
+                                  onChange={(e) => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.max(100, Math.min(600, parseInt(e.target.value) || 250));
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                    }
+                                  }}
+                                  className="flex-1 border border-stone-300 rounded p-3 text-sm text-center font-semibold focus:outline-none focus:border-editorial-red"
                                 />
-                                {state.coverPage[key as keyof typeof state.coverPage] && (
-                                  <div className="border border-stone-200 overflow-hidden rounded bg-stone-50">
-                                    <img
-                                      src={state.coverPage[key as keyof typeof state.coverPage] as string}
-                                      alt={`Gallery ${label}`}
-                                      className="w-full h-24 object-cover"
-                                    />
-                                  </div>
-                                )}
+                                <span className="text-sm font-semibold text-stone-600 whitespace-nowrap">px</span>
+                                <button
+                                  onClick={() => {
+                                    if (state && state.coverPage) {
+                                      const height = Math.min(600, state.coverPage.imageHeight + 10);
+                                      const newCoverPage = { ...state.coverPage, imageHeight: height };
+                                      saveStateToServer({ ...state, coverPage: newCoverPage }, 'Altura actualizada');
+                                    }
+                                  }}
+                                  className="px-3 py-2 bg-stone-200 hover:bg-stone-300 border border-stone-300 text-stone-700 font-bold text-sm rounded transition-all"
+                                >
+                                  +
+                                </button>
                               </div>
-                            ))}
-                          </div>
-
-                          {/* Title Spanish */}
-                          <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Título (Español)' : 'Title (Spanish)'}
-                            </label>
-                            <input
-                              type="text"
-                              value={state.coverPage.titleEs}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, titleEs: e.target.value };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
-                            />
-                          </div>
-
-                          {/* Title English */}
-                          <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Título (Inglés)' : 'Title (English)'}
-                            </label>
-                            <input
-                              type="text"
-                              value={state.coverPage.titleEn}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, titleEn: e.target.value };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
-                            />
-                          </div>
-
-                          {/* Subtitle Spanish */}
-                          <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Subtítulo (Español)' : 'Subtitle (Spanish)'}
-                            </label>
-                            <textarea
-                              value={state.coverPage.subtitleEs}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, subtitleEs: e.target.value };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
-                              rows={3}
-                            />
-                          </div>
-
-                          {/* Subtitle English */}
-                          <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest font-bold text-stone-600">
-                              {lang === 'es' ? 'Subtítulo (Inglés)' : 'Subtitle (English)'}
-                            </label>
-                            <textarea
-                              value={state.coverPage.subtitleEn}
-                              onChange={(e) => {
-                                const newCoverPage = { ...state.coverPage, subtitleEn: e.target.value };
-                                setState({ ...state, coverPage: newCoverPage });
-                                saveStateToServer({ ...state, coverPage: newCoverPage });
-                              }}
-                              className="w-full px-3 py-2 border border-stone-300 text-xs focus:outline-none focus:border-editorial-red"
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Right: Live Preview */}
-                        <div className="space-y-3">
-                          <h3 className="text-sm font-cinzel font-semibold uppercase tracking-widest text-editorial-dark">
-                            {lang === 'es' ? 'Vista Previa' : 'Live Preview'}
-                          </h3>
-                          <div className="bg-stone-100 rounded border border-stone-300 p-6 flex flex-col items-center justify-start min-h-[700px] overflow-y-auto space-y-6">
-                            {/* Photo Preview */}
-                            <div className="w-full max-w-xs">
-                              <div
-                                className="border border-stone-300 bg-white overflow-hidden flex items-center justify-center"
-                                style={{
-                                  aspectRatio: '3/4',
-                                  backgroundColor: '#F5F1EB'
-                                }}
-                              >
-                                {state.coverPage.imageSrc && (
-                                  <img
-                                    src={state.coverPage.imageSrc}
-                                    alt="Preview"
-                                    className="w-full h-full object-cover"
-                                  />
-                                )}
+                              <div className="text-xs text-stone-500 text-center mt-2">
+                                {lang === 'es' ? 'Rango: 100px - 600px' : 'Range: 100px - 600px'}
                               </div>
                             </div>
 
-                            {/* Text Preview */}
-                            <div className="text-center space-y-4 w-full max-w-sm">
-                              <span className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold block">
-                                {lang === 'es' ? 'Establecido en 2013 · Vedado' : 'Established in 2013 · Vedado'}
-                              </span>
+                            {/* Spanish Title */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Título (Español)' : 'Title (Spanish)'}
+                              </label>
+                              <input
+                                type="text"
+                                value={state.coverPage?.titleEs || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, titleEs: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Título actualizado');
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
 
-                              <div className="h-16 flex items-center justify-center">
-                                <img
-                                  src="/logo.png"
-                                  alt="Logo"
-                                  className="h-14 w-auto object-contain"
-                                />
+                            {/* English Title */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Título (Inglés)' : 'Title (English)'}
+                              </label>
+                              <input
+                                type="text"
+                                value={state.coverPage?.titleEn || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, titleEn: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Título actualizado');
+                                  }
+                                }}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* Spanish Subtitle */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Subtítulo (Español)' : 'Subtitle (Spanish)'}
+                              </label>
+                              <textarea
+                                value={state.coverPage?.subtitleEs || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, subtitleEs: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Subtítulo actualizado');
+                                  }
+                                }}
+                                rows={3}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* English Subtitle */}
+                            <div>
+                              <label className="text-sm font-bold text-stone-700 block mb-2">
+                                {lang === 'es' ? 'Subtítulo (Inglés)' : 'Subtitle (English)'}
+                              </label>
+                              <textarea
+                                value={state.coverPage?.subtitleEn || ''}
+                                onChange={(e) => {
+                                  if (state && state.coverPage) {
+                                    const newCoverPage = { ...state.coverPage, subtitleEn: e.target.value };
+                                    saveStateToServer({ ...state, coverPage: newCoverPage }, 'Subtítulo actualizado');
+                                  }
+                                }}
+                                rows={3}
+                                className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
+                              />
+                            </div>
+
+                            {/* Gallery Photos Section */}
+                            <div className="border-t border-stone-200 pt-6">
+                              <h3 className="text-sm font-bold text-stone-700 mb-4">
+                                {lang === 'es' ? 'Fotos de Galería' : 'Gallery Photos'}
+                              </h3>
+                              <div className="space-y-4">
+                                {[
+                                  { key: 'galleryPhoto1' as const, label: lang === 'es' ? 'Foto 1' : 'Photo 1' },
+                                  { key: 'galleryPhoto2' as const, label: lang === 'es' ? 'Foto 2' : 'Photo 2' },
+                                  { key: 'galleryPhoto3' as const, label: lang === 'es' ? 'Foto 3' : 'Photo 3' }
+                                ].map(({ key, label }) => {
+                                  const photoKey = key;
+                                  return (
+                                    <div key={photoKey}>
+                                      <label className="text-xs font-bold text-stone-700 block mb-2">{label}</label>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file && state?.coverPage) {
+                                            const reader = new FileReader();
+                                            reader.onload = (evt) => {
+                                              if (evt.target?.result && state.coverPage) {
+                                                const newCoverPage = { ...state.coverPage, [photoKey]: evt.target.result as string };
+                                                saveStateToServer({ ...state, coverPage: newCoverPage }, `📸 ${label} actualizada`);
+                                              }
+                                            };
+                                            reader.readAsDataURL(file);
+                                          }
+                                        }}
+                                        className="w-full border border-stone-300 rounded p-2 text-xs focus:outline-none focus:border-editorial-red"
+                                      />
+                                      {state.coverPage && state.coverPage[photoKey] && (
+                                        <img
+                                          src={state.coverPage[photoKey]}
+                                          alt={label}
+                                          className="mt-2 w-full h-24 rounded border border-stone-200 object-cover"
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
+                            </div>
+                          </div>
 
-                              <h2 className="font-cinzel text-3xl font-bold text-editorial-dark leading-tight">
-                                {lang === 'es' ? state.coverPage.titleEs : state.coverPage.titleEn}
-                              </h2>
+                          {/* Right: Preview */}
+                          <div className="bg-stone-100 rounded border border-stone-300 p-6 flex flex-col items-center justify-center min-h-[600px]">
+                            <div className="w-full max-w-sm space-y-4">
+                              <h3 className="text-xs uppercase tracking-widest font-bold text-stone-500 text-center">
+                                {lang === 'es' ? 'Vista Previa' : 'Preview'}
+                              </h3>
 
-                              <p className="font-serif italic text-sm text-editorial-red leading-snug">
-                                "{lang === 'es' ? state.coverPage.subtitleEs : state.coverPage.subtitleEn}"
-                              </p>
+                              {state.coverPage?.imageSrc && (
+                                <img
+                                  src={state.coverPage.imageSrc}
+                                  alt="Cover"
+                                  className="w-full rounded border border-stone-200"
+                                  style={{ height: `${state.coverPage.imageHeight}px`, objectFit: 'cover' }}
+                                />
+                              )}
 
-                              <div className="pt-4 border-t border-stone-200 text-xs">
-                                <p className="uppercase tracking-widest font-semibold text-editorial-dark mb-1">
-                                  {lang === 'es' ? 'Horario' : 'Hours'}
-                                </p>
-                                <p className="text-stone-600 text-[11px]">
-                                  {lang === 'es' ? 'Lunes a Domingo 8:30 - 23:00' : 'Mon-Sun 8:30 AM - 11:00 PM'}
+                              <div className="text-center space-y-2">
+                                <h1 className="font-cinzel text-3xl font-bold text-editorial-dark">
+                                  {lang === 'es' ? state.coverPage?.titleEs : state.coverPage?.titleEn}
+                                </h1>
+                                <p className="font-serif italic text-lg text-editorial-red">
+                                  {lang === 'es' ? state.coverPage?.subtitleEs : state.coverPage?.subtitleEn}
                                 </p>
                               </div>
                             </div>
@@ -1681,10 +1571,20 @@ export default function App() {
                   )}
 
                   {/* SUB PANEL A: MENU ITEMS LIST OR EDIT/FORM */}
-                  {adminCategory === 'menu' && (
+                  {adminCategory === 'menu' && state && (
                     <div className="p-4 sm:p-8 space-y-6">
-                      
-                      {!editingItem ? (
+
+                      {/* DEBUG LOG PANEL */}
+                      {debugLogs.length > 0 && (
+                        <div className="fixed bottom-4 right-4 bg-stone-900 text-stone-100 text-[10px] p-3 rounded border border-stone-700 max-w-xs max-h-40 overflow-y-auto font-mono z-40">
+                          <div className="font-bold mb-2 text-stone-400">DEBUG:</div>
+                          {debugLogs.map((log, i) => (
+                            <div key={i} className="text-stone-300 whitespace-pre-wrap break-words">{log}</div>
+                          ))}
+                        </div>
+                      )}
+
+                      {!editingItem && (
                         /* Default screen of A: List of items + filters */
                         <div className="space-y-6">
                           
@@ -1782,255 +1682,88 @@ export default function App() {
                                 <p className="text-xs uppercase tracking-widest font-cinzel">No se encontraron platos</p>
                               </div>
                             ) : (
-                              getFilteredItemsForAdmin().map(item => (
-                                <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50 transition-colors">
-                                  <div className="space-y-1 min-w-0 flex-1 cursor-pointer hover:bg-stone-100 p-2 -m-2 transition-colors" onClick={() => setEditingItem(item)}>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-[8px] uppercase tracking-widest font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 border border-stone-200">
-                                        {item.category.toUpperCase()}
-                                      </span>
-                                      <span className="text-[9px] text-stone-400 italic">
-                                        {item.subcategory}
-                                      </span>
-                                    </div>
-                                    <h4 className="font-serif font-semibold text-base text-editorial-dark truncate">
-                                      {item.nameEs || <span className="text-stone-300 italic">Sin título</span>}
-                                      <span className="text-stone-400 font-sans font-light text-xs ml-2">
-                                        {item.nameEn && `/ ${item.nameEn}`}
-                                      </span>
-                                    </h4>
-                                    <p className="text-xs text-stone-500 font-medium tracking-wider">
-                                      {lang === 'es' ? 'Precio: ' : 'Price: '}
-                                      <span className="text-editorial-red font-semibold">{item.price}</span>
-                                    </p>
-                                  </div>
-
-                                  {/* Availability toggles + actions */}
-                                  <div className="flex items-center gap-4 shrink-0 justify-end">
-                                    
-                                    {/* Available Box switch toggle */}
-                                    <button 
-                                      onClick={() => handleToggleAvailability(item.id)}
-                                      className={`cursor-pointer text-[10px] uppercase font-semibold tracking-widest px-3 py-1.5 border flex items-center gap-1 transition-all ${
-                                        item.available 
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                          : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                                      }`}
+                              <div className="p-4 space-y-2">
+                                <p className="text-sm text-stone-600">{getFilteredItemsForAdmin().length} productos encontrados</p>
+                                {getFilteredItemsForAdmin().map(item => (
+                                  <div key={item.id} className="flex items-center gap-3 p-3 bg-white border border-stone-200 rounded hover:bg-stone-50 transition-colors">
+                                    <input
+                                      type="checkbox"
+                                      checked={item.available}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleAvailability(item.id);
+                                      }}
+                                      className="w-4 h-4 rounded border-stone-300 cursor-pointer shrink-0"
+                                    />
+                                    <div
+                                      className="flex-1 cursor-pointer"
+                                      onClick={() => {
+                                        setEditingItem(item);
+                                      }}
                                     >
-                                      {item.available ? (
-                                        <>
-                                          <Check className="w-3 h-3 text-emerald-500" />
-                                          <span>{lang === 'es' ? 'Disponible' : 'Available'}</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <X className="w-3 h-3 text-stone-400" />
-                                          <span>{lang === 'es' ? 'Agotado' : 'Sold Out'}</span>
-                                        </>
-                                      )}
-                                    </button>
-
-                                    {/* Action items */}
-                                    <div className="flex gap-1.5">
-                                      <button 
-                                        onClick={() => setEditingItem(item)}
-                                        className="p-2 border border-stone-200 bg-white hover:border-editorial-dark hover:text-editorial-dark text-stone-500 transition-colors cursor-pointer"
-                                        title={lang === 'es' ? 'Editar' : 'Edit'}
-                                      >
-                                        <Edit className="w-3.5 h-3.5" />
-                                      </button>
-                                      
-                                      <button 
-                                        onClick={() => handleDeleteMenuItem(item.id, item.nameEs)}
-                                        className="p-2 border border-stone-200 bg-white hover:border-editorial-red hover:text-editorial-red text-stone-500 transition-colors cursor-pointer"
-                                        title={lang === 'es' ? 'Eliminar' : 'Delete'}
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                                      <p className="text-sm font-semibold">{item.nameEs}</p>
+                                      <p className="text-xs text-stone-500">Precio: {item.price}</p>
                                     </div>
-
                                   </div>
-                                </div>
-                              ))
+                                ))}
+                              </div>
                             )}
                           </div>
 
                         </div>
-                      ) : editingItem && state ? (
-                        /* Edit item active subform editor */
-                        <form onSubmit={handleSaveMenuItem} className="bg-white border border-editorial-dark/10 p-6 sm:p-8 space-y-6">
+                      )}
 
-                          <div className="flex justify-between items-center border-b border-stone-100 pb-4">
-                            <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-red">
-                              {isAddingNew ? (lang === 'es' ? 'NUEVO ELEMENTO DE LA CARTA' : 'ADD NEW MENU ITEM') : (lang === 'es' ? 'MODIFICAR ELEMENTO DE LA CARTA' : 'EDIT MENU ITEM')}
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingItem(null);
-                                setIsAddingNew(false);
-                              }}
-                              className="text-stone-400 hover:text-stone-700 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider"
-                            >
-                              <ArrowLeft className="w-3.5 h-3.5" />
-                              <span>{lang === 'es' ? 'Cancelar / Volver' : 'Back'}</span>
-                            </button>
+                      {editingItem && (
+                        <div style={{ padding: '20px', background: '#f5f5f5', border: '2px solid #333' }}>
+                          <h3>{editingItem.nameEs}</h3>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>Nombre:</label>
+                            <input
+                              type="text"
+                              defaultValue={editingItem.nameEs}
+                              id="edit_nameEs"
+                              style={{ width: '100%', padding: '5px' }}
+                            />
                           </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                            {/* Category Selector */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Categoría General
-                              </label>
-                              <select
-                                value={editingItem?.category || ''}
-                                onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value as any })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red"
-                              >
-                                <option value="bebidas">Bebidas (Drinks)</option>
-                                <option value="primeros">Primeros / Entradas / Pastas</option>
-                                <option value="principales">Platos Principales (Mains)</option>
-                                <option value="postres">Postres (Desserts)</option>
-                                <option value="espirituosos">Espirituosos (Spirits / Vinos)</option>
-                              </select>
-                            </div>
-
-                            {/* Subcategory Label editable */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Subcategoría del menú <span className="text-editorial-red">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="Ej: Sin Alcohol, Carnes, Tradicionales Cubanos"
-                                value={editingItem?.subcategory}
-                                onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
-                                className={`w-full bg-stone-50 border px-3 py-2 text-xs focus:outline-none focus:border-editorial-red ${
-                                  editingItem?.subcategory?.trim() ? 'border-stone-300' : 'border-red-300'
-                                }`}
-                              />
-                              {!editingItem?.subcategory?.trim() && (
-                                <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
-                              )}
-                            </div>
-
-                            {/* Spanish Product Name */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Nombre Oficial (Español) <span className="text-editorial-red">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="..."
-                                value={editingItem?.nameEs}
-                                onChange={(e) => setEditingItem({ ...editingItem, nameEs: e.target.value })}
-                                className={`w-full bg-stone-50 border px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif font-semibold ${
-                                  editingItem?.nameEs?.trim() ? 'border-stone-300' : 'border-red-300'
-                                }`}
-                              />
-                              {!editingItem?.nameEs?.trim() && (
-                                <p className="text-[9px] text-red-600 font-semibold">Rellena este campo</p>
-                              )}
-                            </div>
-
-                            {/* English Product Name */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Nombre Traducido (Inglés)
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="Ej: Fresh Strawberry Lemonade..."
-                                value={editingItem?.nameEn}
-                                onChange={(e) => setEditingItem({ ...editingItem, nameEn: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-serif"
-                              />
-                            </div>
-
-                            {/* Price selector */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Precio de venta visible (CUP / USD / EUR)
-                              </label>
-                              <input 
-                                type="text"
-                                placeholder="Ej. 1200 CUP o 5.00 USD"
-                                value={editingItem?.price}
-                                onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 px-3 py-2.5 text-xs focus:outline-none focus:border-editorial-red font-semibold"
-                                required
-                              />
-                            </div>
-
-                            {/* Spanish Description */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Descripción en Español
-                              </label>
-                              <textarea 
-                                rows={2}
-                                placeholder="Ingredientes, modo de preparación..."
-                                value={editingItem?.descEs}
-                                onChange={(e) => setEditingItem({ ...editingItem, descEs: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-                              />
-                            </div>
-
-                            {/* English Description */}
-                            <div className="space-y-1 sm:col-span-2">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">
-                                Descripción en Inglés
-                              </label>
-                              <textarea 
-                                rows={2}
-                                placeholder="..."
-                                value={editingItem?.descEn}
-                                onChange={(e) => setEditingItem({ ...editingItem, descEn: e.target.value })}
-                                className="w-full bg-stone-50 border border-stone-300 p-3 text-xs focus:outline-none focus:border-editorial-red"
-                              />
-                            </div>
-
-                            {/* Availability switch checkbox */}
-                            <div className="flex items-center gap-2 sm:col-span-2 pt-2">
-                              <input 
-                                type="checkbox"
-                                id="item_available_check"
-                                checked={editingItem?.available}
-                                onChange={(e) => setEditingItem({ ...editingItem, available: e.target.checked })}
-                                className="w-4 h-4 text-editorial-red accent-editorial-red"
-                              />
-                              <label htmlFor="item_available_check" className="text-xs uppercase tracking-wider font-semibold text-stone-700 cursor-pointer">
-                                {lang === 'es' ? 'Plato disponible en almacén para la venta' : 'Item is available/in stock for clients'}
-                              </label>
-                            </div>
-
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>Precio:</label>
+                            <input
+                              type="text"
+                              defaultValue={editingItem.price}
+                              id="edit_price"
+                              style={{ width: '100%', padding: '5px' }}
+                            />
                           </div>
-
-                          <div className="pt-4 flex gap-4">
-                            <button 
-                              type="submit"
-                              className="flex-1 bg-[#1A1A1A] hover:bg-editorial-red text-white py-3 text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
-                            >
-                              <Save className="w-4 h-4" />
-                              <span>{isAddingNew ? (lang === 'es' ? 'Añadir plato a la carta' : 'Publish to menu') : (lang === 'es' ? 'Guardar Cambios' : 'Save alterations')}</span>
-                            </button>
-                            
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                setEditingItem(null);
-                                setIsAddingNew(false);
-                              }}
-                              className="border border-stone-300 py-3 px-6 text-xs uppercase tracking-widest hover:bg-stone-50 transition-colors"
-                            >
-                              {lang === 'es' ? 'Volver' : 'Back'}
-                            </button>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label>
+                              <input type="checkbox" id="edit_available" defaultChecked={editingItem.available} />
+                              Disponible
+                            </label>
                           </div>
+                          <button
+                            onClick={() => {
+                              if (!state) return;
+                              const nameEs = (document.getElementById('edit_nameEs') as HTMLInputElement).value;
+                              const price = (document.getElementById('edit_price') as HTMLInputElement).value;
+                              const available = (document.getElementById('edit_available') as HTMLInputElement).checked;
 
-                        </form>
-                      ) : null}
+                              const updated = { ...editingItem, nameEs, price, available };
+                              const newMenuItems = state.menuItems.map(item => item.id === editingItem.id ? updated : item);
+                              saveStateToServer({ ...state, menuItems: newMenuItems }, 'Guardado');
+                              setEditingItem(null);
+                            }}
+                            style={{ padding: '10px 20px', background: '#333', color: '#fff', marginRight: '10px' }}
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            onClick={() => setEditingItem(null)}
+                            style={{ padding: '10px 20px', background: '#ddd' }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
 
                     </div>
                   )}
@@ -2286,654 +2019,6 @@ export default function App() {
                     </form>
                   )}
 
-                  {/* SUB PANEL D: PRINTED PDF MENU GENERATOR */}
-                  {adminCategory === 'pdf' && (
-                    <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:h-[calc(100vh-210px)] min-h-[600px] items-stretch bg-stone-100 text-stone-800">
-                      
-                      {/* Left Column: controls */}
-                      <div className="w-full lg:w-[350px] shrink-0 bg-white p-5 border border-stone-200 flex flex-col justify-between overflow-y-auto shadow-sm gap-6">
-                        <div className="space-y-5">
-                          <header className="border-b border-stone-100 pb-3">
-                            <h3 className="font-cinzel text-xs tracking-widest font-semibold uppercase text-editorial-dark flex items-center gap-1.5">
-                              <FileText className="w-4 h-4 text-editorial-red" />
-                              <span>Generador de Menú PDF</span>
-                            </h3>
-                            <p className="text-[10px] text-stone-500 font-light mt-1 pb-1">
-                              Organiza tu menú por páginas, añade portadas, escoge fondos y descarga como PDF listo para imprimir en tu restaurante.
-                            </p>
-                          </header>
-
-                          {/* Quick Actions / Print */}
-                          <div className="space-y-2">
-                            <button
-                              type="button"
-                              onClick={() => window.print()}
-                              className="w-full bg-editorial-red hover:bg-[#A92222] text-white py-3 px-4 text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm rounded-sm"
-                            >
-                              <Printer className="w-4 h-4" />
-                              <span>Exportar / Imprimir PDF</span>
-                            </button>
-                            <div className="bg-amber-50 border border-amber-200/50 p-2.5 rounded-sm text-[9px] text-amber-700 font-light leading-relaxed">
-                              💡 <strong>Para el mejor resultado al imprimir:</strong> En la ventana de impresión del navegador, activa la opción <strong>"Gráficos de fondo"</strong> (Background graphics) y ajusta los márgenes a <strong>"Ninguno"</strong> o "Predeterminado" (Letter o A4).
-                            </div>
-                          </div>
-
-                          {/* Pages List Selector */}
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-baseline">
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block">Páginas del Documento</label>
-                              <div className="flex gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() => setPagesToPrint(new Set(pdfPages.map(p => p.id)))}
-                                  className="text-[8px] uppercase tracking-widest font-bold text-editorial-red hover:underline cursor-pointer bg-transparent border-none"
-                                >
-                                  Todas
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setPagesToPrint(new Set())}
-                                  className="text-[8px] uppercase tracking-widest font-bold text-stone-400 hover:underline cursor-pointer bg-transparent border-none"
-                                >
-                                  Ninguna
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={addPage}
-                                  className="text-[9px] uppercase tracking-widest font-bold text-editorial-red hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none"
-                                >
-                                  <Plus className="w-3 h-3" /> Añadir
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="border border-stone-200 divide-y divide-stone-100 bg-stone-50 max-h-[160px] overflow-y-auto">
-                              {pdfPages.map((page, index) => (
-                                <div 
-                                  key={page.id}
-                                  onClick={() => setSelectedPdfPageId(page.id)}
-                                  className={`flex items-center justify-between p-2.5 cursor-pointer hover:bg-white transition-all ${
-                                    selectedPdfPageId === page.id ? 'bg-editorial-cream border-l-2 border-editorial-red font-medium text-stone-950' : 'text-stone-600'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <input
-                                      type="checkbox"
-                                      checked={pagesToPrint.has(page.id)}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        const newSet = new Set(pagesToPrint);
-                                        if (e.target.checked) {
-                                          newSet.add(page.id);
-                                        } else {
-                                          newSet.delete(page.id);
-                                        }
-                                        setPagesToPrint(newSet);
-                                      }}
-                                      className="w-4 h-4 accent-editorial-red cursor-pointer"
-                                    />
-                                    <span className="text-[8px] font-mono text-stone-400 font-semibold">{index + 1}</span>
-                                    <span className="text-[10px] truncate max-w-[120px] uppercase tracking-wider">
-                                      {index === 0 ? `📙 Portada: ${page.coverTitle || 'Sin tít.'}` : `📄 Menú: ${page.categories.join(' + ').toUpperCase() || 'Vacío'}`}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
-                                    <button 
-                                      onClick={() => movePageUp(index)} 
-                                      className="text-stone-400 hover:text-stone-700 p-0.5"
-                                      disabled={index === 0}
-                                      title="Subir"
-                                    >
-                                      <ArrowUp className="w-3 h-3" />
-                                    </button>
-                                    <button 
-                                      onClick={() => movePageDown(index)} 
-                                      className="text-stone-400 hover:text-stone-700 p-0.5"
-                                      disabled={index === pdfPages.length - 1}
-                                      title="Bajar"
-                                    >
-                                      <ArrowDown className="w-3 h-3" />
-                                    </button>
-                                    <button 
-                                      onClick={() => deletePage(page.id)} 
-                                      className="text-stone-400 hover:text-editorial-red p-0.5"
-                                      title="Eliminar"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Selected Page Controls Settings */}
-                          {selectedPage && (
-                            <div className="border-t border-stone-200 pt-3 space-y-4">
-                              <h4 className="text-[10px] uppercase tracking-widest font-bold text-editorial-red">
-                                Configurar Página {pdfPages.findIndex(p => p.id === selectedPdfPageId) + 1}
-                              </h4>
-
-
-                              {/* Title / Subtitle Text Override */}
-                              <div className="grid grid-cols-1 gap-2">
-                                <div className="space-y-0.5">
-                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Título de la Página</label>
-                                  <input
-                                    type="text"
-                                    value={selectedPage.coverTitle}
-                                    onChange={e => updateSelectedPage({ coverTitle: e.target.value })}
-                                    placeholder="Ej: NUESTRA COCINA"
-                                    className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-xs focus:outline-none focus:border-editorial-red rounded-sm"
-                                  />
-                                </div>
-                                <div className="space-y-0.5">
-                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400">Subtítulo o Descripción</label>
-                                  <input
-                                    type="text"
-                                    value={selectedPage.coverSubtitle}
-                                    onChange={e => updateSelectedPage({ coverSubtitle: e.target.value })}
-                                    placeholder="Ej: Plato Principal & Selección de la Casa"
-                                    className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-xs focus:outline-none focus:border-editorial-red rounded-sm"
-                                  />
-                                </div>
-                                {selectedPageIndex === 0 && (
-                                  <div className="space-y-3 border-t border-stone-200 pt-3">
-                                    {/* Logo Upload & Size */}
-                                    <div className="space-y-2">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Logo</label>
-                                      <label className="block w-full border-2 border-dashed border-editorial-red rounded-sm p-3 cursor-pointer hover:bg-red-50 transition-colors text-center">
-                                        <input
-                                          type="file"
-                                          accept="image/jpeg,image/png,image/webp"
-                                          onChange={(e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                              const reader = new FileReader();
-                                              reader.onload = (event) => {
-                                                if (event.target?.result) {
-                                                  updateSelectedPage({ coverLogo: event.target.result as string });
-                                                }
-                                              };
-                                              reader.readAsDataURL(e.target.files[0]);
-                                            }
-                                          }}
-                                          className="hidden"
-                                        />
-                                        <span className="text-[10px] text-editorial-red font-semibold">📁 Subir Logo</span>
-                                      </label>
-                                      <div className="flex items-center gap-2">
-                                        <label className="text-[9px] text-stone-500 w-16">Tamaño:</label>
-                                        <input
-                                          type="range"
-                                          min="20"
-                                          max="200"
-                                          value={selectedPage.coverLogoSize || 80}
-                                          onChange={e => updateSelectedPage({ coverLogoSize: parseInt(e.target.value) })}
-                                          className="flex-1"
-                                        />
-                                        <span className="text-[9px] text-stone-500 w-8">{selectedPage.coverLogoSize || 80}px</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Secondary Text */}
-                                    <div className="space-y-1">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Texto Secundario</label>
-                                      <input
-                                        type="text"
-                                        value={selectedPage.coverSecondaryText || ''}
-                                        onChange={e => updateSelectedPage({ coverSecondaryText: e.target.value })}
-                                        placeholder="Ej: RESTAURANTE & BAR"
-                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                      />
-                                    </div>
-
-                                    {/* Secondary Image */}
-                                    <div className="space-y-2">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Imagen Secundaria (Opcional)</label>
-                                      <label className="block w-full border-2 border-dashed border-stone-300 rounded-sm p-3 cursor-pointer hover:bg-stone-50 transition-colors text-center">
-                                        <input
-                                          type="file"
-                                          accept="image/jpeg,image/png,image/webp"
-                                          onChange={(e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                              const reader = new FileReader();
-                                              reader.onload = (event) => {
-                                                if (event.target?.result) {
-                                                  updateSelectedPage({ coverSecondaryImage: event.target.result as string });
-                                                }
-                                              };
-                                              reader.readAsDataURL(e.target.files[0]);
-                                            }
-                                          }}
-                                          className="hidden"
-                                        />
-                                        <span className="text-[10px] text-stone-500 font-semibold">📁 Subir Imagen</span>
-                                      </label>
-                                    </div>
-
-                                    {/* Background Color/Image */}
-                                    <div className="space-y-1">
-                                      <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Color de Fondo</label>
-                                      <input
-                                        type="color"
-                                        value="#FFFFFF"
-                                        onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
-                                        className="w-full h-8 rounded-sm cursor-pointer"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={selectedPage.backgroundImage}
-                                        onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
-                                        placeholder="O pega URL de imagen..."
-                                        className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Background Options - Only for Cover Pages */}
-                              {selectedPageIndex === 0 && (
-                                <div className="space-y-2">
-                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Fondo de la Página</label>
-
-                                  {/* Direct URL Input */}
-                                  <input
-                                    type="text"
-                                    value={selectedPage.backgroundImage}
-                                    onChange={e => updateSelectedPage({ backgroundImage: e.target.value })}
-                                    placeholder="URL personalizada de fondo..."
-                                    className="w-full bg-stone-50 border border-stone-200 px-2 py-1 text-[10px] focus:outline-none focus:border-editorial-red rounded-sm font-light"
-                                  />
-
-                                  {/* Gallery Quick Selector Carousel */}
-                                  {state && state.galleryItems.length > 0 && (
-                                    <div className="space-y-1">
-                                      <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Tus Fotos Subidas:</span>
-                                      <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-[310px] scrollbar-thin">
-                                        {state.galleryItems.map(item => (
-                                          <button
-                                            key={item.id}
-                                            type="button"
-                                            onClick={() => updateSelectedPage({ backgroundImage: item.imageSrc })}
-                                            className={`w-12 h-9 shrink-0 relative overflow-hidden rounded-sm border transition-all cursor-pointer ${
-                                              selectedPage.backgroundImage === item.imageSrc ? 'border-editorial-red scale-90 ring-1 ring-editorial-red' : 'border-stone-300 hover:border-stone-450'
-                                            }`}
-                                          >
-                                            <img src={item.imageSrc} className="w-full h-full object-cover" />
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Stock Classy Background presets */}
-                                  <div className="space-y-1 pt-1">
-                                    <span className="text-[8px] text-stone-400 uppercase tracking-widest font-semibold">Fondos de Catálogo:</span>
-                                    <div className="grid grid-cols-2 gap-1">
-                                      {[
-                                        { name: 'Portada Bodega', url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop' },
-                                        { name: 'Copas Vino', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop' },
-                                        { name: 'Copa Cockt.', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop' },
-                                        { name: 'Mármol Blanco', url: 'https://images.unsplash.com/photo-1533038590840-1cde6b66b706?q=80&w=1200&auto=format&fit=crop' },
-                                        { name: 'Páginas Claras', url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1200&auto=format&fit=crop' }
-                                      ].map(b => (
-                                        <button
-                                          key={b.name}
-                                          type="button"
-                                          onClick={() => updateSelectedPage({ backgroundImage: b.url })}
-                                          className="text-[8px] uppercase tracking-wider font-semibold py-1 px-1.5 border border-stone-200 text-stone-600 bg-stone-50 hover:bg-stone-100 rounded-sm hover:border-stone-300 cursor-pointer"
-                                        >
-                                          {b.name}
-                                        </button>
-                                      ))}
-                                      <button
-                                        type="button"
-                                        onClick={() => updateSelectedPage({ backgroundImage: '' })}
-                                        className="text-[8px] col-span-2 uppercase tracking-wider font-semibold py-1 px-1.5 border border-dashed border-stone-300 text-stone-500 bg-white hover:bg-stone-50 rounded-sm text-center cursor-pointer"
-                                      >
-                                        ❌ Sin fondo (Blanco Puro)
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Opacity slider */}
-                                  {selectedPage.backgroundImage && (
-                                    <div className="space-y-0.5 pt-1">
-                                      <div className="flex justify-between text-[8px] uppercase tracking-wider font-bold text-stone-400">
-                                        <span>Opacidad de Imagen</span>
-                                        <span>{selectedPage.bgOpacity}%</span>
-                                      </div>
-                                      <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={selectedPage.bgOpacity}
-                                        onChange={e => updateSelectedPage({ bgOpacity: parseInt(e.target.value) })}
-                                        className="w-full accent-editorial-red h-1 bg-stone-200 rounded-sm appearance-none cursor-pointer"
-                                      />
-                                      <p className="text-[7.5px] text-stone-400 leading-none mt-1">
-                                        * Ajuste a un nivel bajo (12% - 15%) en menús de platos para asegurar que la tipografía de precios sea totalmente legible.
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Menu Settings Category selection (Only on Menu Page) */}
-                              {selectedPageIndex !== 0 && (
-                                <div className="space-y-2 border-t border-stone-100 pt-3">
-                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Agrupar platos en esta página</label>
-                                  <div className="space-y-1.5">
-                                    {([
-                                      { id: 'bebidas', label: '🍹 Bebidas y Tragos' },
-                                      { id: 'primeros', label: '🥗 Entrantes y Tapas' },
-                                      { id: 'principales', label: '🍖 Platos Principales' },
-                                      { id: 'postres', label: '🎂 Postres Dulces' },
-                                      { id: 'espirituosos', label: '🍷 Licores y Bodega' }
-                                    ] as const).map(cat => {
-                                      const isChecked = selectedPage.categories.includes(cat.id);
-                                      return (
-                                        <button
-                                          key={cat.id}
-                                          type="button"
-                                          onClick={() => {
-                                            const newCats = isChecked
-                                              ? selectedPage.categories.filter(c => c !== cat.id)
-                                              : [...selectedPage.categories, cat.id];
-                                            updateSelectedPage({ categories: newCats });
-                                          }}
-                                          className={`w-full flex items-center justify-between px-3 py-2 text-[10px] tracking-wider text-left uppercase border rounded-sm transition-all cursor-pointer ${
-                                            isChecked 
-                                              ? 'bg-editorial-cream border-editorial-red text-stone-900 font-semibold' 
-                                              : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
-                                          }`}
-                                        >
-                                          <span>{cat.label}</span>
-                                          <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center ${
-                                            isChecked ? 'bg-editorial-red border-editorial-red text-white' : 'border-stone-300 bg-white'
-                                          }`}>
-                                            {isChecked && <Check className="w-2.5 h-2.5" />}
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Layout Design Customization Columns-Font Font Scale (Only on Menu Page) */}
-                              {selectedPageIndex !== 0 && (
-                                <div className="space-y-3 border-t border-stone-100 pt-3">
-                                  <label className="text-[9px] uppercase tracking-wider font-bold text-stone-400 block">Ajustes de Diseño</label>
-                                  
-                                  {/* Columns selector */}
-                                  <div className="space-y-0.5">
-                                    <span className="text-[8px] uppercase tracking-wider font-bold text-stone-400">Columnas</span>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => updateSelectedPage({ columns: 1 })}
-                                        className={`py-1 text-[9px] border text-center transition-all cursor-pointer ${
-                                          selectedPage.columns === 1 ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200'
-                                        }`}
-                                      >
-                                        1 Columna
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => updateSelectedPage({ columns: 2 })}
-                                        className={`py-1 text-[9px] border text-center transition-all cursor-pointer ${
-                                          selectedPage.columns === 2 ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200'
-                                        }`}
-                                      >
-                                        2 Columnas
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Font Size Selector */}
-                                  <div className="space-y-0.5">
-                                    <span className="text-[8px] uppercase tracking-wider font-bold text-stone-400">Tamaño del Texto</span>
-                                    <div className="grid grid-cols-3 gap-1">
-                                      {(['sm', 'base', 'lg'] as const).map(sz => (
-                                        <button
-                                          key={sz}
-                                          type="button"
-                                          onClick={() => updateSelectedPage({ fontSize: sz })}
-                                          className={`py-1 text-[8px] uppercase border text-center transition-all font-semibold cursor-pointer ${
-                                            selectedPage.fontSize === sz ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200'
-                                          }`}
-                                        >
-                                          {sz === 'sm' ? 'Pequeño' : sz === 'lg' ? 'Grande' : 'Normal'}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  {/* Hide descriptions */}
-                                  <div className="flex items-center gap-2 pt-1">
-                                    <input
-                                      type="checkbox"
-                                      id="hide_desc_check"
-                                      checked={selectedPage.hideDescriptions}
-                                      onChange={e => updateSelectedPage({ hideDescriptions: e.target.checked })}
-                                      className="w-3.5 h-3.5 accent-editorial-red cursor-pointer"
-                                    />
-                                    <label htmlFor="hide_desc_check" className="text-[9px] uppercase tracking-wider text-stone-600 font-semibold cursor-pointer select-none">
-                                      Ocultar descripción de platos
-                                    </label>
-                                  </div>
-
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                        </div>
-
-                        {/* Vercel GitHub comment footer block */}
-                        <div className="border-t border-stone-100 pt-3 text-[9px] text-stone-400 font-light leading-relaxed">
-                          🏠 <strong>Alojamiento Vercel / GitHub:</strong> El portal de administración guardará datos permanentes usando nuestro Cloud API. Para guardar localmente si cambias a un servidor estático, puedes importar/exportar la base de datos completa.
-                        </div>
-                      </div>
-
-                      {/* Right Column: Beautiful live high fidelity canvas preview */}
-                      <div className="flex-1 bg-stone-300 border border-stone-400 p-6 flex flex-col items-center justify-start overflow-y-auto rounded-sm select-none shadow-inner min-h-[500px]">
-                        <div className="mb-4 text-center">
-                          <span className="text-[9px] uppercase tracking-[0.2em] bg-stone-400 text-stone-900 font-bold px-3 py-1 rounded-full shadow-sm">
-                            VISTA PREVIA DEL DOCUMENTO IMPRESO (ESC. 1:1)
-                          </span>
-                        </div>
-
-                        {/* High fidelity interactive printed page render wrapper */}
-                        {selectedPage ? (
-                          <div
-                            className="w-[100%] max-w-[480px] aspect-[210/297] text-stone-900 relative shadow-2xl overflow-hidden flex flex-col justify-between p-[8%] animate-fade-in border border-white"
-                            style={{
-                              backgroundColor:
-                                selectedPageIndex === 0
-                                  ? selectedPage.backgroundColor || '#ffffff'
-                                  : '#ffffff',
-                              backgroundImage:
-                                selectedPageIndex === 0 && selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0
-                                  ? `url(${selectedPage.backgroundImage})`
-                                  : 'none',
-                              backgroundPosition: 'center',
-                              backgroundSize: 'cover',
-                              backgroundRepeat: 'no-repeat',
-                              backgroundAttachment: 'fixed'
-                            }}
-                          >
-
-                            {/* Overlay background - Only for cover page */}
-                            {selectedPageIndex === 0 && selectedPage.backgroundImage && (selectedPage.bgOpacity || 0) > 0 && (
-                              <div
-                                className="absolute inset-0 pointer-events-none z-0"
-                                style={{
-                                  backgroundImage: `url(${selectedPage.backgroundImage})`,
-                                  backgroundPosition: 'center',
-                                  backgroundSize: 'cover',
-                                  backgroundRepeat: 'no-repeat',
-                                  opacity: selectedPage.bgOpacity / 100
-                                }}
-                              />
-                            )}
-
-                            {/* Render Cover inside Live Preview */}
-                            {selectedPageIndex === 0 ? (
-                              <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-4">
-                                {selectedPage.coverSecondaryImage && (
-                                  <img src={selectedPage.coverSecondaryImage} alt="Secondary" className="mb-4 object-contain opacity-90" style={{ maxHeight: '80px' }} />
-                                )}
-
-                                {selectedPage.coverLogo && (
-                                  <img
-                                    src={selectedPage.coverLogo}
-                                    alt="Logo"
-                                    className="w-auto object-contain mb-6"
-                                    style={{ height: `${selectedPage.coverLogoSize || 80}px` }}
-                                  />
-                                )}
-
-                                {selectedPage.showCoverTitle && (
-                                  <>
-                                    <h3 className="font-cinzel text-2xl sm:text-3xl font-extrabold tracking-[0.2em] text-stone-900 uppercase">
-                                      {selectedPage.coverTitle || 'LA CATEDRAL'}
-                                    </h3>
-                                    <div className="w-16 h-[1px] bg-stone-400 my-4"></div>
-                                  </>
-                                )}
-
-                                {selectedPage.showCoverSubtitle ? (
-                                  <h4 className="font-sans text-[10px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
-                                    {selectedPage.coverSubtitle || 'RESTAURANTE & BAR'}
-                                  </h4>
-                                ) : selectedPage.coverSecondaryText ? (
-                                  <h4 className="font-sans text-[10px] uppercase tracking-[0.25em] text-stone-600 font-semibold">
-                                    {selectedPage.coverSecondaryText}
-                                  </h4>
-                                ) : null}
-                              </div>
-                            ) : (
-                              /* Render Menu list inside Live Preview */
-                              <div className="relative z-10 flex-1 flex flex-col border border-stone-300/40 p-4 justify-between h-full">
-                                <div>
-                                  {/* Page Header */}
-                                  <header className="border-b border-stone-800 pb-1.5 mb-4 text-center">
-                                    <div className="font-cinzel text-stone-400 text-[7px] tracking-widest uppercase">
-                                      La Catedral Restaurante
-                                    </div>
-                                    <h3 className="font-cinzel text-sm font-bold tracking-[0.15em] text-stone-900 uppercase">
-                                      {selectedPage.coverTitle || 'NOT DEFINED'}
-                                    </h3>
-                                    {selectedPage.coverSubtitle && (
-                                      <p className="text-[7.5px] text-stone-500 tracking-wider font-light">
-                                        {selectedPage.coverSubtitle}
-                                      </p>
-                                    )}
-                                  </header>
-
-                                  {/* Categories mapping */}
-                                  <div className={selectedPage.columns === 2 ? "grid grid-cols-2 gap-x-4 gap-y-3" : "space-y-4"}>
-                                    {selectedPage.categories.length === 0 ? (
-                                      <div className="col-span-full text-center py-10 text-stone-400 text-[9px] italic">
-                                        (Selecciona una o más categorías de comida en el menú de la izquierda para ver su contenido aquí)
-                                      </div>
-                                    ) : (
-                                      selectedPage.categories.map(cat => {
-                                        const items = state?.menuItems.filter(item => item.category === cat) || [];
-                                        if (items.length === 0) return null;
-
-                                        return (
-                                          <div key={cat} className="space-y-2">
-                                            <h4 className="font-cinzel text-[8.5px] tracking-[0.15em] font-extrabold text-editorial-red border-b border-stone-300 pb-0.5 uppercase">
-                                              {cat === 'bebidas' ? 'Bebidas' : 
-                                               cat === 'primeros' ? 'Entrantes' : 
-                                               cat === 'principales' ? 'Principales' : 
-                                               cat === 'postres' ? 'Postres' : 
-                                               'Licores'}
-                                            </h4>
-
-                                            <div className="space-y-1.5">
-                                              {items.map(item => {
-                                                const textClass = selectedPage.fontSize === 'sm' ? {
-                                                  title: "text-[8px]", desc: "text-[7px]", price: "text-[8px]"
-                                                } : selectedPage.fontSize === 'lg' ? {
-                                                  title: "text-[10px]", desc: "text-[8px]", price: "text-[10px]"
-                                                } : {
-                                                  title: "text-[9px]", desc: "text-[7.5px]", price: "text-[9px]"
-                                                };
-
-                                                return (
-                                                  <div key={item.id} className={`space-y-0.5 animate-fade-in ${!item.available ? 'opacity-50' : ''}`}>
-                                                    <div className="flex justify-between items-baseline gap-1">
-                                                      <div className="flex items-center gap-0.5">
-                                                        <span className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
-                                                          {lang === 'es' ? item.nameEs : item.nameEn}
-                                                        </span>
-                                                        {!item.available && (
-                                                          <span className="text-[6px] font-bold text-red-600 uppercase tracking-wider">
-                                                            {lang === 'es' ? 'AGOTADO' : 'OUT'}
-                                                          </span>
-                                                        )}
-                                                      </div>
-                                                      <div className="flex-1 border-b border-dotted border-stone-200 mx-1"></div>
-                                                      <span className={`font-mono font-bold text-stone-800 shrink-0 ${textClass.price}`}>
-                                                        {item.price}
-                                                      </span>
-                                                    </div>
-                                                    {!selectedPage.hideDescriptions && (item.descEs || item.descEn) && (
-                                                      <p className={`text-stone-400 italic font-mono leading-none ${textClass.desc}`}>
-                                                        {lang === 'es' ? item.descEs : item.descEn}
-                                                      </p>
-                                                    )}
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        );
-                                      })
-                                    )}
-                                  </div>
-                                </div>
-
-                                <footer className="text-center pt-2 border-t border-stone-100 text-[7px] text-stone-400 font-mono flex justify-between items-center relative z-10 mt-4">
-                                  <span>Mesa Reservas: {state?.generalInfo.phone || 'La Catedral'}</span>
-                                  <span>Página {pdfPages.findIndex(p => p.id === selectedPdfPageId) + 1}</span>
-                                </footer>
-                              </div>
-                            )}
-
-                          </div>
-                        ) : (
-                          <div className="p-12 text-center text-stone-500 bg-white shadow-xl rounded-sm">
-                            No has seleccionado o creado ninguna página. Pulsa "Añadir Página" a la izquierda.
-                          </div>
-                        )}
-                        
-                        {/* Page counter bar */}
-                        <div className="mt-4 flex gap-1.5">
-                          {pdfPages.map((p, idx) => (
-                            <button
-                              key={p.id}
-                              onClick={() => setSelectedPdfPageId(p.id)}
-                              className={`w-7 h-7 rounded-full text-[10px] font-semibold border flex items-center justify-center transition-all cursor-pointer ${
-                                p.id === selectedPdfPageId 
-                                  ? 'bg-editorial-red text-white border-editorial-red shadow' 
-                                  : 'bg-white text-stone-600 border-stone-300 hover:border-stone-500'
-                              }`}
-                            >
-                              {idx + 1}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
 
                 </div>
 
@@ -2943,18 +2028,21 @@ export default function App() {
                     🔒 {lang === 'es' ? 'Los datos se guardan de forma permanente e inmediata en el servidor.' : 'Server-persisted database engine.'}
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={async () => {
-                        if (state) {
-                          await saveStateToServer(state, 'Cambios guardados. Volviendo a la web...');
-                          await new Promise(resolve => setTimeout(resolve, 500));
-                        }
-                        setAdminOpen(false);
-                      }}
+                    <button 
+                      onClick={resetStateToDefault}
                       type="button"
-                      className="cursor-pointer bg-editorial-red hover:bg-editorial-dark text-white px-4 py-2 text-[9px] uppercase tracking-widest font-semibold transition-all"
+                      className="cursor-pointer border border-editorial-red/30 bg-white hover:bg-editorial-red/10 text-editorial-red/90 px-4 py-2 text-[9px] uppercase tracking-widest font-semibold flex items-center gap-1.5 transition-all"
                     >
-                      ✓ {lang === 'es' ? 'Volver a la Web' : 'Back to Website'}
+                      <RefreshCw className="w-3 h-3" />
+                      <span>{lang === 'es' ? 'Valores de Fábrica' : 'Reset defaults'}</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setIsAuthenticated(false)}
+                      type="button"
+                      className="cursor-pointer bg-editorial-dark hover:bg-stone-800 text-stone-200 px-4 py-2 text-[9px] uppercase tracking-widest font-semibold transition-all"
+                    >
+                      🛡️ {lang === 'es' ? 'Cerrar Sesión' : 'Lock session'}
                     </button>
                   </div>
                 </footer>
@@ -2967,187 +2055,6 @@ export default function App() {
         </div>
       )}
 
-      {/* EXCLUSIVO PARA IMPRENTAS / COPIA FISICA (PRINT-ONLY) */}
-      <div id="print-container" className="hidden print:block print-container-only absolute left-0 top-0 w-full bg-white text-stone-900 pointer-events-none">
-        <style>{`
-          @media print {
-            body {
-              background: white !important;
-              color: black !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            /* Hide entire reactive interactive client/admin SPA tree from physical print layout */
-            #root > div:not(#print-container) {
-              display: none !important;
-            }
-            #navbar, #admin_overlay, #main-client-container, footer {
-              display: none !important;
-            }
-            #print-container {
-              display: block !important;
-              width: 100% !important;
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              z-index: 9999999 !important;
-            }
-            .print-page {
-              page-break-after: always !important;
-              break-after: page !important;
-              height: 295mm !important;
-              width: 210mm !important;
-              margin: 0 auto !important;
-              padding: 18mm !important;
-              position: relative !important;
-              box-sizing: border-box !important;
-              background-color: white !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              overflow: hidden !important;
-            }
-            @page {
-              size: A4 portrait;
-              margin: 0mm;
-            }
-          }
-        `}</style>
-
-        {pdfPages.map((page, index) => {
-          // Only render pages that are selected for printing
-          if (!pagesToPrint.has(page.id)) return null;
-
-          return (
-          <div
-            key={page.id}
-            className="print-page flex flex-col justify-between"
-            style={{ pageBreakAfter: index === pdfPages.length - 1 ? 'avoid' : 'always' }}
-          >
-            {/* Background Image Container - Only for Cover Page */}
-            {index === 0 && page.backgroundImage && (
-              <div
-                className="absolute inset-0 pointer-events-none z-0"
-                style={{
-                  backgroundImage: `url(${page.backgroundImage})`,
-                  backgroundPosition: 'center',
-                  backgroundSize: 'cover',
-                  backgroundRepeat: 'no-repeat',
-                  opacity: page.bgOpacity / 100
-                }}
-              />
-            )}
-
-            {/* Cover Layout Rendering */}
-            {index === 0 ? (
-              <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center p-8 border-4 border-double border-stone-800 h-full">
-                <div className="text-3xl font-cinzel text-editorial-red mb-2">✛</div>
-                <h1 className="font-cinzel text-4xl sm:text-5xl font-bold tracking-[0.25em] text-stone-900 uppercase">
-                  {page.coverTitle || 'LA CATEDRAL'}
-                </h1>
-                <div className="w-24 h-[1px] bg-stone-500 my-6"></div>
-                <h2 className="font-sans text-[11px] uppercase tracking-[0.3em] text-stone-600 font-semibold">
-                  {page.coverSubtitle || 'RESTAURANTE & BAR'}
-                </h2>
-                
-                <div className="absolute bottom-8 text-[9px] uppercase tracking-[0.25em] text-stone-400 font-serif">
-                  {state?.generalInfo.address || 'Calle 13, El Vedado, La Habana'}
-                </div>
-              </div>
-            ) : (
-              /* Menu Content Categories Listing Layout */
-              <div className="relative z-10 flex-1 flex flex-col border border-stone-300/40 p-10 h-full justify-between">
-                <div>
-                  {/* Category Page Header Section */}
-                  <header className="border-b-2 border-stone-800 pb-3 mb-6 text-center">
-                    <div className="font-cinzel text-stone-500 text-[10px] tracking-widest font-bold mb-1 uppercase">
-                      La Catedral Restaurante
-                    </div>
-                    <h2 className="font-cinzel text-xl font-bold tracking-[0.2em] text-stone-900 uppercase">
-                      {page.coverTitle || 'CARTA'}
-                    </h2>
-                    {page.coverSubtitle && (
-                      <p className="text-[10px] text-stone-500 tracking-wider font-light mt-0.5">
-                        {page.coverSubtitle}
-                      </p>
-                    )}
-                  </header>
-
-                  {/* Dual Grid Column and Single Page groupings */}
-                  <div className={page.columns === 2 ? "grid grid-cols-2 gap-x-8 gap-y-6" : "space-y-6"}>
-                    {page.categories.length === 0 ? (
-                      <div className="col-span-full text-center py-20 text-stone-400 text-xs italic">
-                        (Seleccione una o más categorías de comida para listar en esta página)
-                      </div>
-                    ) : (
-                      page.categories.map(cat => {
-                        const items = state?.menuItems.filter(item => item.category === cat) || [];
-                        if (items.length === 0) return null;
-
-                        return (
-                          <div key={cat} className="space-y-4">
-                            <h3 className="font-cinzel text-[11px] tracking-[0.2em] font-extrabold text-editorial-red border-b border-stone-350 pb-1 uppercase">
-                              {cat === 'bebidas' ? (lang === 'es' ? 'Bebidas y Tragos' : 'Drinks & Cocktails') : 
-                               cat === 'primeros' ? (lang === 'es' ? 'Entrantes y Tapas' : 'Starters & Salads') : 
-                               cat === 'principales' ? (lang === 'es' ? 'Platos Fuertes' : 'Main Courses') : 
-                               cat === 'postres' ? (lang === 'es' ? 'Postres Artesanales' : 'Homemade Desserts') : 
-                               (lang === 'es' ? 'Licores y Bodega' : 'Liquors & Selection')}
-                            </h3>
-
-                            <div className="space-y-3">
-                              {items.map(item => {
-                                const textClass = page.fontSize === 'sm' ? {
-                                  title: "text-[10px]", desc: "text-[8.5px] leading-snug", price: "text-[10px]"
-                                } : page.fontSize === 'lg' ? {
-                                  title: "text-[12px]", desc: "text-[10.5px] leading-relaxed", price: "text-[12px]"
-                                } : {
-                                  title: "text-[11px]", desc: "text-[9.5px] leading-relaxed", price: "text-[11px]"
-                                };
-
-                                return (
-                                  <div key={item.id} className={`space-y-0.5 break-inside-avoid ${!item.available ? 'opacity-50' : ''}`}>
-                                    <div className="flex justify-between items-baseline gap-1">
-                                      <div className="flex items-center gap-0.5">
-                                        <h4 className={`font-cinzel font-semibold text-stone-900 tracking-wide ${textClass.title}`}>
-                                          {lang === 'es' ? item.nameEs : item.nameEn}
-                                        </h4>
-                                        {!item.available && (
-                                          <span className="text-[7px] font-bold text-red-600 uppercase tracking-wider">
-                                            {lang === 'es' ? 'AGOTADO' : 'OUT'}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="flex-1 border-b border-dotted border-stone-300 mx-1"></div>
-                                      <span className={`font-mono font-bold text-stone-800 shrink-0 ${textClass.price}`}>
-                                        {item.price}
-                                      </span>
-                                    </div>
-                                    {!page.hideDescriptions && (item.descEs || item.descEn) && (
-                                      <p className={`text-stone-500 italic font-mono ${textClass.desc}`}>
-                                        {lang === 'es' ? item.descEs : item.descEn}
-                                      </p>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer printed catalog reference row */}
-                <footer className="text-center pt-4 border-t border-stone-100 text-[8.5px] text-stone-400 font-mono flex justify-between items-center mt-auto">
-                  <span>Tel: {state?.generalInfo.phone || 'La Catedral'}</span>
-                  <span>Mesa Reservas - Página {index + 1}</span>
-                </footer>
-              </div>
-            )}
-          </div>
-        );
-        })}
-      </div>
 
     </div>
   );

@@ -3,15 +3,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export interface MenuItem {
+// Producto base con información core
+export interface Product {
   id: string;
-  category: 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos';
-  subcategory: string; // e.g. "Sin Alcohol", "Cervezas", "Tesoros para Compartir — Entrantes"
   nameEs: string;
   nameEn: string;
   descEs: string;
   descEn: string;
-  price: string; // String to support multiple currencies / formats (e.g. "300 CUP", "$5.00 USD")
+  price: string;
+  available: boolean;
+}
+
+// Especialidad (agrupa productos con mismo tipo dentro de categoría)
+export interface Specialty {
+  id: string;
+  nameEs: string;
+  nameEn: string;
+  products: Product[];
+}
+
+// Categoría principal (bebidas, primeros, etc.)
+export interface MenuCategory {
+  id: 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos';
+  nameEs: string;
+  nameEn: string;
+  specialties: Specialty[];
+}
+
+// Para compatibilidad con código existente
+export interface MenuItem {
+  id: string;
+  category: 'bebidas' | 'primeros' | 'principales' | 'postres' | 'espirituosos';
+  subcategory: string;
+  nameEs: string;
+  nameEn: string;
+  descEs: string;
+  descEn: string;
+  price: string;
   available: boolean;
 }
 
@@ -41,9 +69,9 @@ export interface CoverPage {
   titleEn: string;
   subtitleEs: string;
   subtitleEn: string;
-  galleryPhoto1: string; // Base64 or URL for first gallery photo
-  galleryPhoto2: string; // Base64 or URL for second gallery photo
-  galleryPhoto3: string; // Base64 or URL for third gallery photo
+  galleryPhoto1: string;
+  galleryPhoto2: string;
+  galleryPhoto3: string;
 }
 
 export interface AppState {

@@ -515,5 +515,8 @@ export const initialCoverPage: CoverPage = {
   titleEs: 'LA CATEDRAL',
   titleEn: 'LA CATEDRAL',
   subtitleEs: '"Rindiendo culto permanente a la buena mesa en La Habana"',
-  subtitleEn: '"A permanent devotion to fine culinary art in Havana"'
+  subtitleEn: '"A permanent devotion to fine culinary art in Havana"',
+  galleryPhoto1: 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=400&auto=format&fit=crop',
+  galleryPhoto2: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&auto=format&fit=crop',
+  galleryPhoto3: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=400&auto=format&fit=crop'
 };

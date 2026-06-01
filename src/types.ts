@@ -69,6 +69,9 @@ export interface CoverPage {
   titleEn: string;
   subtitleEs: string;
   subtitleEn: string;
+  galleryPhoto1: string;
+  galleryPhoto2: string;
+  galleryPhoto3: string;
 }
 
 export interface AppState {

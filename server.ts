@@ -62,6 +62,9 @@ async function startServer() {
       if (newState.generalInfo !== undefined) {
         appState.generalInfo = newState.generalInfo;
       }
+      if (newState.coverPage !== undefined) {
+        appState.coverPage = newState.coverPage;
+      }
 
       console.log(`💾 State saved: ${appState.menuItems.length} menu items`);
       res.json({ success: true, state: appState });
@@ -102,7 +105,8 @@ async function startServer() {
       appState = {
         menuItems: [...initialMenuItems],
         galleryItems: [...initialGalleryItems],
-        generalInfo: { ...initialGeneralInfo }
+        generalInfo: { ...initialGeneralInfo },
+        coverPage: { ...initialCoverPage }
       };
 
       console.log(`🔄 Reset to defaults: ${appState.menuItems.length} menu items`);

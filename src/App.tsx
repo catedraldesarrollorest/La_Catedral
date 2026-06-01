@@ -1467,6 +1467,49 @@ export default function App() {
                                 className="w-full border border-stone-300 rounded p-3 text-sm focus:outline-none focus:border-editorial-red"
                               />
                             </div>
+
+                            {/* Gallery Photos Section */}
+                            <div className="border-t border-stone-200 pt-6">
+                              <h3 className="text-sm font-bold text-stone-700 mb-4">
+                                {lang === 'es' ? 'Fotos de Galería' : 'Gallery Photos'}
+                              </h3>
+                              <div className="space-y-4">
+                                {[
+                                  { key: 'galleryPhoto1', label: lang === 'es' ? 'Foto 1' : 'Photo 1' },
+                                  { key: 'galleryPhoto2', label: lang === 'es' ? 'Foto 2' : 'Photo 2' },
+                                  { key: 'galleryPhoto3', label: lang === 'es' ? 'Foto 3' : 'Photo 3' }
+                                ].map(({ key, label }) => (
+                                  <div key={key}>
+                                    <label className="text-xs font-bold text-stone-700 block mb-2">{label}</label>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file && state?.coverPage) {
+                                          const reader = new FileReader();
+                                          reader.onload = (evt) => {
+                                            if (evt.target?.result && state.coverPage) {
+                                              const newCoverPage = { ...state.coverPage, [key]: evt.target.result as string };
+                                              saveStateToServer({ ...state, coverPage: newCoverPage }, `📸 ${label} actualizada`);
+                                            }
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                      className="w-full border border-stone-300 rounded p-2 text-xs focus:outline-none focus:border-editorial-red"
+                                    />
+                                    {state.coverPage && state.coverPage[key as keyof typeof state.coverPage] && (
+                                      <img
+                                        src={state.coverPage[key as keyof typeof state.coverPage] as string}
+                                        alt={label}
+                                        className="mt-2 w-full h-24 rounded border border-stone-200 object-cover"
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           </div>
 
                           {/* Right: Preview */}

@@ -25,20 +25,45 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Function to delete old image file
+const deleteOldImage = async (filepath: string): Promise<void> => {
+  try {
+    if (filepath?.startsWith('/uploads/')) {
+      const fullPath = path.join(__dirname, 'public', filepath);
+      await fsPromises.unlink(fullPath);
+      console.log(`🗑️  Deleted old image: ${filepath}`);
+    }
+  } catch (err) {
+    // Silently ignore if file doesn't exist
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+      console.error(`Warning: Could not delete old image: ${err}`);
+    }
+  }
+};
+
 // Function to save base64 image to disk
-const saveImageToDisk = async (base64Data: string, filename: string): Promise<string> => {
+const saveImageToDisk = async (base64Data: string, filename: string, oldPath?: string): Promise<string> => {
   try {
     const matches = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
-    if (!matches) return base64Data; // Return original if not base64
+    if (!matches) {
+      console.warn(`[Image] Not base64 format, keeping original: ${filename}`);
+      return base64Data;
+    }
+
+    // Delete old image if it exists and is different from new
+    if (oldPath && oldPath.startsWith('/uploads/')) {
+      await deleteOldImage(oldPath);
+    }
 
     const ext = matches[1];
     const data = matches[2];
     const filepath = path.join(uploadsDir, filename);
 
     await fsPromises.writeFile(filepath, Buffer.from(data, 'base64'));
+    console.log(`✅ Image saved: ${filepath}`);
     return `/uploads/${filename}`;
   } catch (err) {
-    console.error('Error saving image:', err);
+    console.error('❌ Error saving image:', err);
     return base64Data; // Fallback to original data
   }
 };
@@ -46,14 +71,18 @@ const saveImageToDisk = async (base64Data: string, filename: string): Promise<st
 // Function to convert file URL back to base64 for loading
 const loadImageFromDisk = async (filepath: string): Promise<string> => {
   try {
-    if (!filepath.startsWith('/uploads/')) return filepath;
+    if (!filepath.startsWith('/uploads/')) {
+      console.log(`[Image] Not a /uploads path, returning original: ${filepath.slice(0, 50)}`);
+      return filepath;
+    }
 
     const fullPath = path.join(__dirname, 'public', filepath);
     const data = await fsPromises.readFile(fullPath);
     const ext = path.extname(fullPath).slice(1);
+    console.log(`✅ Image loaded from disk: ${filepath}`);
     return `data:image/${ext};base64,${data.toString('base64')}`;
   } catch (err) {
-    console.error('Error loading image:', err);
+    console.error(`❌ Error loading image (${filepath}):`, err.message);
     return filepath;
   }
 };
@@ -130,18 +159,20 @@ async function startServer() {
       // Process cover page images
       if (newState.coverPage) {
         const cp = newState.coverPage;
+        const oldCoverPage = appState.coverPage;
+
         // Save gallery photos if they're base64 strings
         if (cp.galleryPhoto1 && cp.galleryPhoto1.startsWith('data:image')) {
-          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg');
+          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg', oldCoverPage.galleryPhoto1);
         }
         if (cp.galleryPhoto2 && cp.galleryPhoto2.startsWith('data:image')) {
-          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg');
+          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg', oldCoverPage.galleryPhoto2);
         }
         if (cp.galleryPhoto3 && cp.galleryPhoto3.startsWith('data:image')) {
-          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg');
+          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg', oldCoverPage.galleryPhoto3);
         }
         if (cp.imageSrc && cp.imageSrc.startsWith('data:image')) {
-          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg');
+          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg', oldCoverPage.imageSrc);
         }
       }
 
@@ -177,17 +208,19 @@ async function startServer() {
       // Process cover page images
       if (newState.coverPage) {
         const cp = newState.coverPage;
+        const oldCoverPage = appState.coverPage;
+
         if (cp.galleryPhoto1 && cp.galleryPhoto1.startsWith('data:image')) {
-          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg');
+          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg', oldCoverPage.galleryPhoto1);
         }
         if (cp.galleryPhoto2 && cp.galleryPhoto2.startsWith('data:image')) {
-          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg');
+          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg', oldCoverPage.galleryPhoto2);
         }
         if (cp.galleryPhoto3 && cp.galleryPhoto3.startsWith('data:image')) {
-          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg');
+          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg', oldCoverPage.galleryPhoto3);
         }
         if (cp.imageSrc && cp.imageSrc.startsWith('data:image')) {
-          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg');
+          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg', oldCoverPage.imageSrc);
         }
       }
 

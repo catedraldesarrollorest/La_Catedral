@@ -10,11 +10,53 @@ import { createServer as createViteServer } from 'vite';
 import { initialMenuItems, initialGalleryItems, initialGeneralInfo, initialCoverPage } from './src/initialData.js';
 import { AppState } from './src/types.js';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Function to save base64 image to disk
+const saveImageToDisk = async (base64Data: string, filename: string): Promise<string> => {
+  try {
+    const matches = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!matches) return base64Data; // Return original if not base64
+
+    const ext = matches[1];
+    const data = matches[2];
+    const filepath = path.join(uploadsDir, filename);
+
+    await fsPromises.writeFile(filepath, Buffer.from(data, 'base64'));
+    return `/uploads/${filename}`;
+  } catch (err) {
+    console.error('Error saving image:', err);
+    return base64Data; // Fallback to original data
+  }
+};
+
+// Function to convert file URL back to base64 for loading
+const loadImageFromDisk = async (filepath: string): Promise<string> => {
+  try {
+    if (!filepath.startsWith('/uploads/')) return filepath;
+
+    const fullPath = path.join(__dirname, 'public', filepath);
+    const data = await fsPromises.readFile(fullPath);
+    const ext = path.extname(fullPath).slice(1);
+    return `data:image/${ext};base64,${data.toString('base64')}`;
+  } catch (err) {
+    console.error('Error loading image:', err);
+    return filepath;
+  }
+};
 
 // === IN-MEMORY STATE (Primary source of truth) ===
 let appState: AppState = {
@@ -36,20 +78,71 @@ async function startServer() {
   // === API ROUTES ===
 
   // GET /api/state - Retrieve current state
-  app.get('/api/state', (req, res) => {
-    res.json(appState);
+  app.get('/api/state', async (req, res) => {
+    // Convert file URLs back to base64 for images
+    const stateToReturn = JSON.parse(JSON.stringify(appState));
+    if (stateToReturn.coverPage) {
+      const cp = stateToReturn.coverPage;
+      if (cp.galleryPhoto1?.startsWith('/uploads')) {
+        cp.galleryPhoto1 = await loadImageFromDisk(cp.galleryPhoto1);
+      }
+      if (cp.galleryPhoto2?.startsWith('/uploads')) {
+        cp.galleryPhoto2 = await loadImageFromDisk(cp.galleryPhoto2);
+      }
+      if (cp.galleryPhoto3?.startsWith('/uploads')) {
+        cp.galleryPhoto3 = await loadImageFromDisk(cp.galleryPhoto3);
+      }
+      if (cp.imageSrc?.startsWith('/uploads')) {
+        cp.imageSrc = await loadImageFromDisk(cp.imageSrc);
+      }
+    }
+    res.json(stateToReturn);
   });
 
-  app.get('/api/sync', (req, res) => {
-    res.json(appState);
+  app.get('/api/sync', async (req, res) => {
+    const stateToReturn = JSON.parse(JSON.stringify(appState));
+    if (stateToReturn.coverPage) {
+      const cp = stateToReturn.coverPage;
+      if (cp.galleryPhoto1?.startsWith('/uploads')) {
+        cp.galleryPhoto1 = await loadImageFromDisk(cp.galleryPhoto1);
+      }
+      if (cp.galleryPhoto2?.startsWith('/uploads')) {
+        cp.galleryPhoto2 = await loadImageFromDisk(cp.galleryPhoto2);
+      }
+      if (cp.galleryPhoto3?.startsWith('/uploads')) {
+        cp.galleryPhoto3 = await loadImageFromDisk(cp.galleryPhoto3);
+      }
+      if (cp.imageSrc?.startsWith('/uploads')) {
+        cp.imageSrc = await loadImageFromDisk(cp.imageSrc);
+      }
+    }
+    res.json(stateToReturn);
   });
 
   // POST /api/state - Update state
-  app.post('/api/state', (req, res) => {
+  app.post('/api/state', async (req, res) => {
     try {
       const newState = req.body;
       if (!newState) {
         return res.status(400).json({ error: 'Request body is empty' });
+      }
+
+      // Process cover page images
+      if (newState.coverPage) {
+        const cp = newState.coverPage;
+        // Save gallery photos if they're base64 strings
+        if (cp.galleryPhoto1 && cp.galleryPhoto1.startsWith('data:image')) {
+          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg');
+        }
+        if (cp.galleryPhoto2 && cp.galleryPhoto2.startsWith('data:image')) {
+          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg');
+        }
+        if (cp.galleryPhoto3 && cp.galleryPhoto3.startsWith('data:image')) {
+          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg');
+        }
+        if (cp.imageSrc && cp.imageSrc.startsWith('data:image')) {
+          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg');
+        }
       }
 
       // Update state in memory
@@ -74,11 +167,28 @@ async function startServer() {
     }
   });
 
-  app.post('/api/sync', (req, res) => {
+  app.post('/api/sync', async (req, res) => {
     try {
       const newState = req.body;
       if (!newState) {
         return res.status(400).json({ error: 'Request body is empty' });
+      }
+
+      // Process cover page images
+      if (newState.coverPage) {
+        const cp = newState.coverPage;
+        if (cp.galleryPhoto1 && cp.galleryPhoto1.startsWith('data:image')) {
+          cp.galleryPhoto1 = await saveImageToDisk(cp.galleryPhoto1, 'gallery-photo-1.jpg');
+        }
+        if (cp.galleryPhoto2 && cp.galleryPhoto2.startsWith('data:image')) {
+          cp.galleryPhoto2 = await saveImageToDisk(cp.galleryPhoto2, 'gallery-photo-2.jpg');
+        }
+        if (cp.galleryPhoto3 && cp.galleryPhoto3.startsWith('data:image')) {
+          cp.galleryPhoto3 = await saveImageToDisk(cp.galleryPhoto3, 'gallery-photo-3.jpg');
+        }
+        if (cp.imageSrc && cp.imageSrc.startsWith('data:image')) {
+          cp.imageSrc = await saveImageToDisk(cp.imageSrc, 'cover-image.jpg');
+        }
       }
 
       if (newState.menuItems !== undefined) {
@@ -135,6 +245,9 @@ async function startServer() {
       }))
     });
   });
+
+  // Serve uploaded images
+  app.use('/uploads', express.static(uploadsDir));
 
   // Serve Vite assets in development vs static SPA build in production
   if (process.env.NODE_ENV !== 'production') {

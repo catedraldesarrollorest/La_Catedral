@@ -866,17 +866,18 @@ export default function App() {
                               : 'Upload photos to showcase your venue'}
                           </p>
                         </div>
-                      {isAuthenticated && (
-                        <button 
-                          onClick={() => {
-                            setAdminCategory('galeria');
-                            setAdminOpen(true);
-                          }} 
-                          className="mt-4 text-[10px] text-editorial-red uppercase tracking-widest underline underline-offset-4"
-                        >
-                          Subir primera foto ahora
-                        </button>
-                      )}
+                        {isAuthenticated && (
+                          <button
+                            onClick={() => {
+                              setAdminCategory('galeria');
+                              setAdminOpen(true);
+                            }}
+                            className="mt-4 text-[10px] text-editorial-red uppercase tracking-widest underline underline-offset-4"
+                          >
+                            {lang === 'es' ? 'Subir primera foto ahora' : 'Upload the first photo'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 }
@@ -1041,7 +1042,8 @@ export default function App() {
                                   </span>
                                   <span className="font-cinzel text-lg sm:text-xl font-bold text-editorial-red">
                                     {item.price}
-                                </span>
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           ))}
